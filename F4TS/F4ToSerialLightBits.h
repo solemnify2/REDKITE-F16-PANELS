@@ -13,11 +13,11 @@ ______  ___  _____       _____              _         _
     For more informations, please see : https://f4toserial.com/
 
 */
-#define USE_LIGHTBITS;
+#define USE_LIGHTBITS
 
 
 struct LightBit {
-  unsigned char pin = NULL;
+  unsigned char pin = 0;
   bool mode = false;
 };
 
@@ -78,7 +78,7 @@ void parse_setup_LightBit(JsonVariant json) {
     if(ALLOW_DEBUG) { Serial.print("Pin number is : ");Serial.print(pinsConfiguration.size());Serial.println(""); }
     
     int *pins = new int[pinsConfiguration.size()];
-    for(int i = 0; i < pinsConfiguration.size(); i++) {
+    for(size_t i = 0; i < pinsConfiguration.size(); i++) {
       pins[i] = pinsConfiguration[i].as<int>();
       add_lightBit(pins[i]);
     }
@@ -98,7 +98,7 @@ void parse_set_LightBit(JsonVariant json) {
     int *modes = new int[pinsModes.size()];
     
     
-    for(int i = 0; i < pinsModes.size(); i++) {
+    for(size_t i = 0; i < pinsModes.size(); i++) {
         modes[i] = pinsModes[i].as<int>();
         if(ALLOW_DEBUG) { Serial.print("LightBit ");Serial.print(lightBits[i].pin);Serial.print(" = ");Serial.print(modes[i]); Serial.print(" : "); }
         if(modes[i] == 0) {

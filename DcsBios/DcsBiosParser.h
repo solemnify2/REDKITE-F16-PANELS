@@ -28,6 +28,13 @@
 #define DCSBIOS_GEAR_R_ADDR     0x447C
 #define DCSBIOS_GEAR_RIGHT_MASK 0x0001  // bit 0
 
+// Address 0x447E: RWR/TWA indicator lights
+#define DCSBIOS_TWA_ADDR          0x447E
+#define DCSBIOS_TWA_SEARCH_MASK   0x0400  // bit 10 — LIGHT_RWR_SEARCH
+#define DCSBIOS_TWA_ACT_MASK      0x0800  // bit 11 — LIGHT_RWR_ACTIVITY
+#define DCSBIOS_TWA_POWER_MASK    0x1000  // bit 12 — LIGHT_RWR_ACT_POWER
+#define DCSBIOS_TWA_LOW_MASK      0x2000  // bit 13 — LIGHT_RWR_ALT_LOW
+
 // Address 0x4544: ECM indicator (bit14)
 #define DCSBIOS_ECM_ADDR        0x4544
 #define DCSBIOS_ECM_MASK        0x4000  // bit 14
@@ -53,16 +60,25 @@ static uint16_t     dcsBiosAddr  = 0;
 static uint16_t     dcsBiosCount = 0;
 static uint16_t     dcsBiosSkip  = 0;
 static uint8_t      dcsBiosDataBuf[2];
-static uint8_t      dcsBiosDataIdx = 0;
-static bool         dcsBiosCapture = false;  // true if current chunk is an address we care about
+static bool         dcsBiosCapture = false;  // true if current chunk overlaps an address we care about
 
 // ================================================================
 //  Address Interest Check
 // ================================================================
 
-// Returns true if we need to capture data for this address
+// Returns true if we need to process data for this 2-byte aligned address
 static bool dcsBiosIsInteresting(uint16_t addr) {
-  return (addr == DCSBIOS_GEAR_NL_ADDR || addr == DCSBIOS_GEAR_R_ADDR || addr == DCSBIOS_ECM_ADDR);
+  return (addr == DCSBIOS_GEAR_NL_ADDR || addr == DCSBIOS_GEAR_R_ADDR ||
+          addr == DCSBIOS_TWA_ADDR || addr == DCSBIOS_ECM_ADDR);
+}
+
+// Returns true if the chunk [addr, addr+count) overlaps any interesting address
+static bool dcsBiosChunkIsInteresting(uint16_t addr, uint16_t count) {
+  uint16_t end = addr + count;
+  return (DCSBIOS_GEAR_NL_ADDR >= addr && DCSBIOS_GEAR_NL_ADDR < end) ||
+         (DCSBIOS_GEAR_R_ADDR  >= addr && DCSBIOS_GEAR_R_ADDR  < end) ||
+         (DCSBIOS_TWA_ADDR     >= addr && DCSBIOS_TWA_ADDR     < end) ||
+         (DCSBIOS_ECM_ADDR     >= addr && DCSBIOS_ECM_ADDR     < end);
 }
 
 // ================================================================
@@ -79,6 +95,12 @@ static void dcsBiosOnUpdate(uint16_t addr, uint16_t value) {
   else if (addr == DCSBIOS_GEAR_R_ADDR) {
     writeLed(LI_RIGHT_GEAR, (value & DCSBIOS_GEAR_RIGHT_MASK));
   }
+  else if (addr == DCSBIOS_TWA_ADDR) {
+    writeLed(LI_TWA_POWER, (value & DCSBIOS_TWA_POWER_MASK));
+    writeLed(LI_TWA_LOW, (value & DCSBIOS_TWA_LOW_MASK));
+    writeLed(LI_TWA_SEARCH, (value & DCSBIOS_TWA_SEARCH_MASK));
+    writeLed(LI_TWA_ACT, (value & DCSBIOS_TWA_ACT_MASK));
+  }
   else if (addr == DCSBIOS_ECM_ADDR) {
     writeLed(LI_ECM, (value & DCSBIOS_ECM_MASK));
   }
@@ -93,7 +115,6 @@ void dcsBiosReset() {
   dcsBiosAddr    = 0;
   dcsBiosCount   = 0;
   dcsBiosSkip    = 0;
-  dcsBiosDataIdx = 0;
   dcsBiosCapture = false;
 }
 
@@ -143,25 +164,28 @@ void dcsBiosProcessByte(uint8_t b) {
         break;
       }
 
-      dcsBiosCapture = dcsBiosIsInteresting(dcsBiosAddr);
-      dcsBiosDataIdx = 0;
+      dcsBiosCapture = dcsBiosChunkIsInteresting(dcsBiosAddr, dcsBiosCount);
       dcsBiosSkip    = 0;
       dcsBiosState   = DCS_DATA;
       break;
 
     case DCS_DATA:
-      if (dcsBiosCapture && dcsBiosDataIdx < 2) {
-        dcsBiosDataBuf[dcsBiosDataIdx] = b;
+      if (dcsBiosCapture) {
+        // Accumulate bytes in pairs, processing each 2-byte word
+        if ((dcsBiosSkip & 1) == 0) {
+          dcsBiosDataBuf[0] = b;  // low byte
+        } else {
+          dcsBiosDataBuf[1] = b;  // high byte — word complete
+          uint16_t wordAddr = dcsBiosAddr + (dcsBiosSkip & ~1u);
+          if (dcsBiosIsInteresting(wordAddr)) {
+            uint16_t value = dcsBiosDataBuf[0] | ((uint16_t)dcsBiosDataBuf[1] << 8);
+            dcsBiosOnUpdate(wordAddr, value);
+          }
+        }
       }
-      dcsBiosDataIdx++;
       dcsBiosSkip++;
 
       if (dcsBiosSkip >= dcsBiosCount) {
-        // Chunk complete
-        if (dcsBiosCapture && dcsBiosCount >= 2) {
-          uint16_t value = dcsBiosDataBuf[0] | ((uint16_t)dcsBiosDataBuf[1] << 8);
-          dcsBiosOnUpdate(dcsBiosAddr, value);
-        }
         dcsBiosState = DCS_ADDR_LOW;  // Next chunk
       }
       break;

@@ -4,35 +4,42 @@
 #include <WProgram.h>
 #endif
 
+#include "MemoryFree.h"
+
+#if defined(__arm__) && defined(TEENSYDUINO)
+// Teensy 4.x (ARM Cortex-M7) implementation
+extern unsigned long _heap_start;
+extern unsigned long _heap_end;
+extern char *__brkval;
+
+int freeMemory()
+{
+  char top;
+  return &top - __brkval;
+}
+
+#else
+// AVR implementation
 extern unsigned int __heap_start;
 extern void *__brkval;
 
-/*
- * The free list structure as maintained by the
- * avr-libc memory allocation routines.
- */
 struct __freelist
 {
   size_t sz;
   struct __freelist *nx;
 };
 
-/* The head of the free list structure */
 extern struct __freelist *__flp;
 
-#include "MemoryFree.h"
-
-/* Calculates the size of the free list */
 int freeListSize()
 {
   struct __freelist* current;
   int total = 0;
   for (current = __flp; current; current = current->nx)
   {
-    total += 2; /* Add two bytes for the memory block's header  */
+    total += 2;
     total += (int) current->sz;
   }
-
   return total;
 }
 
@@ -50,3 +57,4 @@ int freeMemory()
   }
   return free_memory;
 }
+#endif

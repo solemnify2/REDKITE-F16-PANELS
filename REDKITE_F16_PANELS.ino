@@ -123,25 +123,6 @@ const SwitchDef switches[] = {
   // name                   panel           type         mcpIdx pin1 pin2  stateRef
   //                                                     (-1 = Teensy direct, >= 0 = MCP device index)
 
-  // ---- Standalone ----
-  {"Eject",                 PNL_NONE,       SW_ON_OFF,      -1,   0,   0,  NULL},
-
-  // ---- Gear Panel (left aux console) ----
-  {"EMER Jettison",         PNL_GEAR,       SW_ON_OFF,      -1,   1,   0,  NULL},
-  {"Store CAT",             PNL_GEAR,       SW_ON_OFF,      -1,   2,   0,  NULL},   // CAT I / CAT III
-  {"Horn Silencer",         PNL_GEAR,       SW_ON_OFF,      -1,   3,   0,  NULL},
-  {"Landing Light",         PNL_GEAR,       SW_ON_OFF_ON,   -1,   4,   5,  &swLandingLight},
-  {"Hook",                  PNL_GEAR,       SW_ON_OFF,      -1,   6,   0,  NULL},   // Up / Down
-  {"Landing Gear",          PNL_GEAR,       SW_ON_OFF_ON,   -1,   7,   8,  &swGear},  // UP / DN
-  {"DN LOCK REL",           PNL_GEAR,       SW_ON_OFF,      -1,   9,   0,  NULL},
-  {"GND JETT ENABLE",       PNL_GEAR,       SW_ON_OFF,      -1,  10,   0,  NULL},   // ENABLE / OFF
-  {"ANTI SKID",             PNL_GEAR,       SW_ON_OFF_ON,   -1,  11,  12,  NULL},   // PARKING BRAKE / ANTI SKID / OFF
-  {"BRAKES Channel",        PNL_GEAR,       SW_ON_OFF,      -1,  13,   0,  NULL},   // CHAN 1 / CHAN 2
-
-  // ---- Alt Gear Panel (left aux console) ----
-  {"ALT GEAR Handle",       PNL_ALT_GEAR,   SW_ON_OFF,      -1,  14,   0,  NULL},
-  {"ALT GEAR Reset",        PNL_ALT_GEAR,   SW_ON_OFF,      -1,  15,   0,  NULL},
-
   // ---- MISC Panel (MCP23017 device 0, addr 0x20) ----
   // MCP pin mapping: GPA0–7 = 0–7, GPB0–7 = 8–15
   {"Laser ARM",             PNL_MISC,       SW_ON_OFF,       0,   0,   0,  NULL},   // GPA0
@@ -150,33 +131,49 @@ const SwitchDef switches[] = {
   {"Pitch AP",              PNL_MISC,       SW_ON_OFF_ON,    0,   5,   6,  NULL},   // GPA5, GPA6
   {"Roll AP",               PNL_MISC,       SW_ON_OFF_ON,    0,   7,   8,  NULL},   // GPA7, GPB0
   {"ALT REL",               PNL_MISC,       SW_ON_OFF,       0,   9,   0,  NULL},   // GPB1
-  {"ADV MODE",              PNL_MISC,       SW_ON_OFF,       0,  10,   0,  NULL},   // GPB2
+  {"ADV MODE",              PNL_MISC,       SW_ON_OFF,       0,   10,   0,  NULL},   // GPB2
+
+  // ---- Gear Panel (left aux console) ----
+  {"EMER Jettison",         PNL_GEAR,       SW_ON_OFF,      -1,   10,   0,  NULL},
+  {"Store CAT",             PNL_GEAR,       SW_ON_OFF,      -1,   5,   0,  NULL},   // CAT I / CAT III
+  {"Horn Silencer",         PNL_GEAR,       SW_ON_OFF,      -1,   2,   0,  NULL},
+  {"Landing Light",         PNL_GEAR,       SW_ON_OFF_ON,   -1,   3,   4,  &swLandingLight},
+  {"Hook",                  PNL_GEAR,       SW_ON_OFF,      -1,   11,   0,  NULL},   // Up / Down
+  {"Landing Gear",          PNL_GEAR,       SW_ON_OFF_ON,   -1,   28,   29,  &swGear},  // UP / DN
+  {"DN LOCK REL",           PNL_GEAR,       SW_ON_OFF,      -1,   1,   0,  NULL},
+  {"GND JETT ENABLE",       PNL_GEAR,       SW_ON_OFF,      -1,   9,   0,  NULL},   // ENABLE / OFF
+  {"ANTI SKID",             PNL_GEAR,       SW_ON_OFF_ON,   -1,   6,  7,  NULL},   // PARKING BRAKE / ANTI SKID / OFF
+  {"BRAKES Channel",        PNL_GEAR,       SW_ON_OFF,      -1,   8,   0,  NULL},   // CHAN 1 / CHAN 2
 
   // ---- CMDS Panel (left aux console) ----
-  {"CMDS RWR",              PNL_CMDS,       SW_ON_OFF,      -1,  21,   0,  NULL},
-  {"CMDS JMR",              PNL_CMDS,       SW_ON_OFF,      -1,  22,   0,  NULL},
-  {"CMDS MWS",              PNL_CMDS,       SW_ON_OFF,      -1,  23,   0,  NULL},
-  {"CMDS O1",               PNL_CMDS,       SW_ON_OFF,      -1,  24,   0,  NULL},
-  {"CMDS O2",               PNL_CMDS,       SW_ON_OFF,      -1,  25,   0,  NULL},
-  {"CMDS CH",               PNL_CMDS,       SW_ON_OFF,      -1,  26,   0,  NULL},
-  {"CMDS FL",               PNL_CMDS,       SW_ON_OFF,      -1,  27,   0,  NULL},
-  {"CMDS JETT",             PNL_CMDS,       SW_ON_OFF,      -1,  28,   0,  NULL},
+  {"CMDS RWR",              PNL_CMDS,       SW_ON_OFF,      -1,  17,   0,  NULL},
+  {"CMDS JMR",              PNL_CMDS,       SW_ON_OFF,      -1,  16,   0,  NULL},
+  {"CMDS MWS",              PNL_CMDS,       SW_ON_OFF,      -1,  15,   0,  NULL},
+  {"CMDS O1",               PNL_CMDS,       SW_ON_OFF,      -1,  20,   0,  NULL},
+  {"CMDS O2",               PNL_CMDS,       SW_ON_OFF,      -1,  21,   0,  NULL},
+  {"CMDS CH",               PNL_CMDS,       SW_ON_OFF,      -1,  22,   0,  NULL},
+  {"CMDS FL",               PNL_CMDS,       SW_ON_OFF,      -1,  23,   0,  NULL},
+  {"CMDS JETT",             PNL_CMDS,       SW_ON_OFF,      -1,  14,   0,  NULL},
+// CMDS PRGM and CMDS MODE moved to analogBtnArrays[] (resistor ladder).
+
+  // ---- Alt Gear Panel (left aux console) ----
+  {"ALT GEAR Handle",       PNL_ALT_GEAR,   SW_ON_OFF,      -1,  33,   0,  NULL},
+  // {"ALT GEAR Reset",        PNL_ALT_GEAR,   SW_ON_OFF,      -1,  15,   0,  NULL},
 
   // ---- ECM Panel (left console) ----
-  {"ECM OPR",               PNL_ECM,        SW_ON_OFF_ON,   -1,  29,  30,  NULL},   // OPR / STBY / OFF
-  {"ECM XMIT",              PNL_ECM,        SW_ON_OFF_ON,   -1,  31,  32,  NULL},   // 1 / 2 / 3
-  {"ECM RESET",             PNL_ECM,        SW_ON_OFF,      -1,  33,   0,  NULL},
-  {"ECM BIT",               PNL_ECM,        SW_ON_OFF,      -1,  34,   0,  NULL},
+  // {"ECM XMIT",              PNL_ECM,        SW_ON_OFF_ON,   -1,  31,  32,  NULL},   // 1 / 2 / 3
+  // {"ECM RESET",             PNL_ECM,        SW_ON_OFF,      -1,  33,   0,  NULL},
+  // {"ECM OPR",               PNL_ECM,        SW_ON_OFF_ON,   -1,  29,  30,  NULL},   // OPR / STBY / OFF
+  // {"ECM BIT",               PNL_ECM,        SW_ON_OFF,      -1,  34,   0,  NULL},
   // ECM 1~5, BLANK, FRM, SPL → moved to analogBtnArrays[] (resistor ladder)
 
   // ---- ELEC Panel (left console) ----
-  {"MAIN PWR",              PNL_ELEC,       SW_ON_OFF_ON,   -1,  35,  36,  NULL},   // MAIN PWR / BATT / OFF
-  {"ELEC CAUTION RESET",    PNL_ELEC,       SW_ON_OFF,      -1,  37,   0,  NULL},
-};
+  // {"MAIN PWR",              PNL_ELEC,       SW_ON_OFF_ON,   -1,  35,  36,  NULL},   // MAIN PWR / BATT / OFF
+  // {"ELEC CAUTION RESET",    PNL_ELEC,       SW_ON_OFF,      -1,  37,   0,  NULL},
 
-// --- Rotary Switches ---
-// CMDS PRGM and CMDS MODE moved to analogBtnArrays[] (resistor ladder).
-// No rotary switches remain; keep a dummy entry to avoid zero-size array issues.
+  // ---- Standalone ----
+  // {"Eject",                 PNL_NONE,       SW_ON_OFF,      -1,   0,   0,  NULL},
+};
 
 #define NUM_ROTARIES 0
 const RotaryDef* const rotaries = nullptr;
@@ -193,7 +190,7 @@ const char* const ecmBtnNames[] = {"ECM 1","ECM 2","ECM 3","ECM 4","ECM 5","ECM 
 const int         ecmBtnValues[] = {843, 718, 624, 553, 496, 449, 411, 379};
 
 const char* const twaBtnNames[] = {"TWA SEARCH","TWA ACT/PWR","TWA ALT","TWA SYS PWR"};
-const int         twaBtnValues[] = {843, 718, 624, 553};
+const int         twaBtnValues[] = {839, 710, 615, 543};
 
 const char* const cmdsModeBtnNames[] = {"MODE 1","MODE 2","MODE 3","MODE 4","MODE 5","MODE 6","MODE 7","MODE 8"};
 const int         cmdsModeBtnValues[] = {843, 718, 624, 553, 496, 449, 411, 379};
@@ -203,10 +200,10 @@ const int         cmdsPrgmBtnValues[] = {843, 718, 624, 553, 496};
 
 const AnalogBtnArrayDef analogBtnArrays[] = {
   // groupName       panel     pin  numBtn  btnNames           values              tolerance
-  {"TWA Buttons",    PNL_TWA,  A12, 4,      twaBtnNames,       twaBtnValues,      30},
-  {"ECM Buttons",    PNL_ECM,  A13, 8,      ecmBtnNames,       ecmBtnValues,      15},
-  {"CMDS MODE",      PNL_CMDS, A15, 8,      cmdsModeBtnNames,  cmdsModeBtnValues, 15},
-  {"CMDS PRGM",      PNL_CMDS, A16, 5,      cmdsPrgmBtnNames,  cmdsPrgmBtnValues, 25},
+  {"TWA Buttons",    PNL_TWA,  A10, 4,      twaBtnNames,       twaBtnValues,      30},
+  // {"CMDS MODE",      PNL_CMDS, A11, 6,      cmdsModeBtnNames,  cmdsModeBtnValues, 15},
+  // {"CMDS PRGM",      PNL_CMDS, A12, 5,      cmdsPrgmBtnNames,  cmdsPrgmBtnValues, 25},
+  // {"ECM Buttons",    PNL_ECM,  A13, 8,      ecmBtnNames,       ecmBtnValues,      15},
 };
 
 #define NUM_ANALOG_ARRAYS (sizeof(analogBtnArrays) / sizeof(analogBtnArrays[0]))
@@ -214,19 +211,23 @@ const AnalogBtnArrayDef analogBtnArrays[] = {
 // --- Analog Pots ---
 const PotDef pots[] = {
   // name      panel     pin   axis
-  {"ECM DIM",  PNL_ECM,  A14,  AXIS_SL},   // ECM brightness — requires JOYSTICK_SIZE 64 if ICP pots active
+//  {"ECM DIM",  PNL_ECM,  A14,  AXIS_SL},   // ECM brightness — requires JOYSTICK_SIZE 64 if ICP pots active
 };
 
 // --- LEDs ---
-enum LedIdx { LI_NOSE_GEAR, LI_LEFT_GEAR, LI_RIGHT_GEAR, LI_ECM };
+enum LedIdx { LI_NOSE_GEAR, LI_LEFT_GEAR, LI_RIGHT_GEAR, LI_TWA_POWER, LI_TWA_LOW, LI_TWA_SEARCH, LI_TWA_ACT, LI_ECM };
 
 const LedDef leds[] = {
   // name          panel      pin  mcpIdx
-  {"Nose Gear",    PNL_GEAR,  16,  -1},
-  {"Left Gear",    PNL_GEAR,  17,  -1},
-  {"Right Gear",   PNL_GEAR,  20,  -1},
+  {"Nose Gear",    PNL_GEAR,  30,  -1},
+  {"Left Gear",    PNL_GEAR,  31,  -1},
+  {"Right Gear",   PNL_GEAR,  32,  -1},
+  {"TWA Power",    PNL_TWA,   34,  -1},
+  {"TWA Low",      PNL_TWA,   35,  -1},
+  {"TWA Search",   PNL_TWA,   36,  -1},
+  {"TWA Act",      PNL_TWA,   37,  -1},
   {"ECM",          PNL_MISC,  11,   0},   // MCP device 0, MCP pin 11 (GPB3)
-};
+  };
 
 // --- MCP23017 Devices ---
 // Wire (SDA=18, SCL=19) — freed by moving CMDS MODE rotary to resistor ladder.
@@ -239,8 +240,8 @@ const McpDeviceDef mcpDevices[] = {
 
 // --- Pedal ---
 #define PEDAL_ENABLED         true
-#define PEDAL_PIN_LEFT        A10
-#define PEDAL_PIN_RIGHT       A11
+#define PEDAL_PIN_LEFT        A16
+#define PEDAL_PIN_RIGHT       A17
 #define PEDAL_DEADZONE        300
 
 #if JOYSTICK_SIZE == 12
@@ -406,6 +407,8 @@ enum Protocol { PROTO_UNKNOWN, PROTO_F4TS, PROTO_DCSBIOS };
 static Protocol  currentProto     = PROTO_UNKNOWN;
 static uint8_t   syncCount        = 0;       // consecutive 0x55 bytes seen
 static uint32_t  protoDetectStart = 0;       // millis() when first byte arrived
+static int       onlineBlinkRemain = 0;      // remaining ON/OFF toggles for TWA1 blink
+static int       onlineBlinkTimer  = 0;      // tick counter for 0.5s interval
 
 // ================================================================
 //  Global State
@@ -580,9 +583,10 @@ void processAnalogButtons() {
       Joystick.button(btn + i, matched);
     }
 
-    if (ALLOW_DEBUG) {
+    // if (ALLOW_DEBUG) {
+    if ( raw > 10 ) 
       Serial.printf("[%s] raw=%d\n", arr.groupName, raw);
-    }
+    // }
   }
 }
 
@@ -647,16 +651,26 @@ void updateLedsOffline() {
   static int blinkCounter = 0;
   const int ticksPerSecond = 1000 / LOOP_DELAY_MS;
 
-  int gearState = swGear;
+  // Gear LEDs: cycle through 3 LEDs, 1 second each
+  static int gearPhase = 0;
+
 
   for (unsigned int i = 0; i < NUM_LEDS; i++) {
     if ((int)i == ECM_LED_IDX)
       writeLed(i, blinkCounter / (ticksPerSecond / 2));
+    else if (i >= LI_NOSE_GEAR && i <= LI_RIGHT_GEAR)
+      writeLed(i, (int)(i - LI_NOSE_GEAR) == gearPhase ? 1 : 0);
+    else if (i >= LI_TWA_POWER && i <= LI_TWA_ACT)
+      writeLed(i, 0);
     else
-      writeLed(i, gearState);
+      writeLed(i, 0);
   }
 
   blinkCounter = (blinkCounter + 1) % ticksPerSecond;
+
+  if (blinkCounter == 0) {
+    gearPhase = (gearPhase + 1) % 3;
+  }
 }
 
 // ================================================================
@@ -695,7 +709,7 @@ int processF4TSByte(int ch) {
 
   if (ret <= 0) return ret;
 
-  DynamicJsonDocument doc(BUFFERSIZE);
+  JsonDocument doc;
   DeserializationError error = deserializeJson(doc, buffer);
   if (error) {
     if (ALLOW_DEBUG) { Serial.print("Deserialization Error: "); Serial.println(error.c_str()); }
@@ -705,34 +719,34 @@ int processF4TSByte(int ch) {
   ret = 1;
 
 #ifdef USE_MOTORS
-  if (doc.containsKey("setup_stepper"))  parse_setup_command(doc["setup_stepper"]);
-  if (doc.containsKey("setstep"))      { parse_setstep_command(doc["setstep"]); ret = 2; }
+  if (doc["setup_stepper"].is<JsonVariant>())  parse_setup_command(doc["setup_stepper"]);
+  if (doc["setstep"].is<JsonVariant>())      { parse_setstep_command(doc["setstep"]); ret = 2; }
 #endif
 
 #ifdef USE_BCD
-  if (doc.containsKey("setup_bcd") && doc.containsKey("digitOn") && doc.containsKey("digitOff"))
+  if (doc["setup_bcd"].is<JsonVariant>() && doc["digitOn"].is<JsonVariant>() && doc["digitOff"].is<JsonVariant>())
     parse_setup_bcd(doc);
-  if (doc.containsKey("set_seg"))        { parse_set_seg_command(doc["set_seg"]); ret = 3; }
-  if (doc.containsKey("destroy_all_bcd")) parse_destroy_bcd();
+  if (doc["set_seg"].is<JsonVariant>())        { parse_set_seg_command(doc["set_seg"]); ret = 3; }
+  if (doc["destroy_all_bcd"].is<JsonVariant>()) parse_destroy_bcd();
 #endif
 
 #ifdef USE_OLED_DISPLAY
-  if (doc.containsKey("setup_display"))       parse_setup_display(doc["setup_display"]);
-  else if (doc.containsKey("set_display"))  { parse_set_display(doc["set_display"]); ret = 4; }
+  if (doc["setup_display"].is<JsonVariant>())       parse_setup_display(doc["setup_display"]);
+  else if (doc["set_display"].is<JsonVariant>())  { parse_set_display(doc["set_display"]); ret = 4; }
 #endif
 
 #ifdef USE_LIGHTBITS
-  if (doc.containsKey("setup_LightBit")) {
+  if (doc["setup_LightBit"].is<JsonVariant>()) {
     parse_destroy_lightBits();
     parse_setup_LightBit(doc["setup_LightBit"]);
   }
-  else if (doc.containsKey("set_LightBit")) { parse_set_LightBit(doc["set_LightBit"]); ret = 5; }
+  else if (doc["set_LightBit"].is<JsonVariant>()) { parse_set_LightBit(doc["set_LightBit"]); ret = 5; }
 #endif
 
 #ifdef USE_MATRIX
-  if (doc.containsKey("setup_matrix"))        parse_setup_matrice(doc["setup_matrix"]);
-  else if (doc.containsKey("destroy_matrix")) { parse_destroy_matrix(); ret = 6; }
-  else if (doc.containsKey("update_matrix"))  parse_set_matrice(doc["update_matrix"]);
+  if (doc["setup_matrix"].is<JsonVariant>())        parse_setup_matrice(doc["setup_matrix"]);
+  else if (doc["destroy_matrix"].is<JsonVariant>()) { parse_destroy_matrix(); ret = 6; }
+  else if (doc["update_matrix"].is<JsonVariant>())  parse_set_matrice(doc["update_matrix"]);
 #endif
 
   if (ALLOW_DEBUG) { Serial.print("Free Memory = "); Serial.println(freeMemory()); }
@@ -776,6 +790,9 @@ bool detectAndRouteSerial() {
           if (syncCount >= 4) {
             currentProto = PROTO_DCSBIOS;
             syncCount = 0;
+            writeLed(LI_TWA_LOW, 1);
+            onlineBlinkRemain = 8;  // 4 blinks (ON/OFF × 4)
+            onlineBlinkTimer = 0;
             if (ALLOW_DEBUG) Serial.println("[Proto] Detected DCS-BIOS");
             // The 4 sync bytes are consumed; parser starts at ADDR_LOW
             dcsBiosReset();
@@ -786,6 +803,9 @@ bool detectAndRouteSerial() {
           // Printable ASCII or JSON start → F4TS
           if (b >= 0x20 && b < 0x7F) {
             currentProto = PROTO_F4TS;
+            writeLed(LI_TWA_POWER, 1);
+            onlineBlinkRemain = 8;  // 4 blinks (ON/OFF × 4)
+            onlineBlinkTimer = 0;
             if (ALLOW_DEBUG) Serial.println("[Proto] Detected F4TS");
             // Feed this first byte to F4TS
             processF4TSByte(ch);
@@ -952,7 +972,19 @@ void loop() {
     updateLedsOffline();
   }
 
-  heartbeat = min(++heartbeat, timeoutTicks);
+  ++heartbeat;
+  heartbeat = min(heartbeat, timeoutTicks);
+
+  // Online detection blink: TWA1 blinks 4 times at 0.5s interval
+  if (onlineBlinkRemain > 0) {
+    const int halfSecTicks = 500 / LOOP_DELAY_MS;  // 10 ticks
+    onlineBlinkTimer++;
+    if (onlineBlinkTimer >= halfSecTicks) {
+      onlineBlinkTimer = 0;
+      onlineBlinkRemain--;
+      writeLed(LI_TWA_POWER, onlineBlinkRemain & 1);  // odd=ON, even=OFF
+    }
+  }
 
   delay(LOOP_DELAY_MS);
 }
