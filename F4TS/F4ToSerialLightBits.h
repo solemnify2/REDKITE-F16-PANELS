@@ -1,15 +1,15 @@
 /*
 
-______  ___  _____       _____              _         _ 
+______  ___  _____       _____              _         _
 |  ___|/   ||_   _|     /  ___|            (_)       | |
 | |_  / /| |  | |  ___  \ `--.   ___  _ __  _   __ _ | |
 |  _|/ /_| |  | | / _ \  `--. \ / _ \| '__|| | / _` || |
 | |  \___  |  | || (_) |/\__/ /|  __/| |   | || (_| || |
 \_|      |_/  \_/ \___/ \____/  \___||_|   |_| \__,_||_|
-                                                        
+
     Copyright (C) F4ToSerial By Myoda, Inc - All Rights Reserved
     Unauthorized copying of this file, via any medium is strictly prohibitedsss
-    Proprietary and confidential  
+    Proprietary and confidential
     For more informations, please see : https://f4toserial.com/
 
 */
@@ -32,20 +32,20 @@ void clear_lightBit() {
 
 /*
 void add_lightBit(int pin) {
-  pinMode(pin, OUTPUT); 
+  pinMode(pin, OUTPUT);
 }
 */
 
 
 void add_lightBit(unsigned char pin) {
-  
+
   if(ALLOW_DEBUG) Serial.println("Add new lightBit");
-  
+
   lightBits = (LightBit*) realloc(lightBits, (LightBitCount + 1) * sizeof(LightBit));
   lightBits[LightBitCount].pin = pin;
   lightBits[LightBitCount].mode = false;
-  pinMode(pin, OUTPUT); 
-  
+  pinMode(pin, OUTPUT);
+
   LightBitCount++;
   if(ALLOW_DEBUG) Serial.println("New lightBit Added");
 
@@ -67,16 +67,16 @@ void parse_setup_LightBit(JsonVariant json) {
       return;
     }
     JsonObject object = json.as<JsonObject>();
-  
+
     if(ALLOW_DEBUG) Serial.println("ready loop SETUP LIGHTBIT");
 
     clear_lightBit();
     if(ALLOW_DEBUG) Serial.println("LightBit Cleared");
-    
+
     JsonArray pinsConfiguration = object["pins"].as<JsonArray>();
-  
+
     if(ALLOW_DEBUG) { Serial.print("Pin number is : ");Serial.print(pinsConfiguration.size());Serial.println(""); }
-    
+
     int *pins = new int[pinsConfiguration.size()];
     for(size_t i = 0; i < pinsConfiguration.size(); i++) {
       pins[i] = pinsConfiguration[i].as<int>();
@@ -92,12 +92,12 @@ void parse_set_LightBit(JsonVariant json) {
       return;
     }
     JsonObject object = json.as<JsonObject>();;
-  
+
     if(ALLOW_DEBUG) Serial.println("----------- ready new Loop -------------");
     JsonArray pinsModes = object["mode"].as<JsonArray>();
     int *modes = new int[pinsModes.size()];
-    
-    
+
+
     for(size_t i = 0; i < pinsModes.size(); i++) {
         modes[i] = pinsModes[i].as<int>();
         if(ALLOW_DEBUG) { Serial.print("LightBit ");Serial.print(lightBits[i].pin);Serial.print(" = ");Serial.print(modes[i]); Serial.print(" : "); }
@@ -107,7 +107,7 @@ void parse_set_LightBit(JsonVariant json) {
          }
          else {
           if(ALLOW_DEBUG) Serial.println("Change to LOW !");
-          lightBits[i].mode = false; 
+          lightBits[i].mode = false;
           digitalWriteFast(lightBits[i].pin, LOW);
           //digitalWrite(lightBits[i].pin, LOW);
         }
@@ -118,13 +118,13 @@ void parse_set_LightBit(JsonVariant json) {
         }
         else {
           if(ALLOW_DEBUG) Serial.println("Change to HIGH !");
-          lightBits[i].mode = true; 
+          lightBits[i].mode = true;
           digitalWriteFast(lightBits[i].pin, HIGH);
           //digitalWrite(lightBits[i].pin, HIGH);
         }
       }
     }
 
-    free(modes); //important pour eviter les fuites de mÃ©moire !!!
-    
+    free(modes); //important pour eviter les fuites de mémoire !!!
+
 }

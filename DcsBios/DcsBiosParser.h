@@ -35,7 +35,7 @@
 #define DCSBIOS_TWA_POWER_MASK    0x1000  // bit 12 — LIGHT_RWR_ACT_POWER
 #define DCSBIOS_TWA_LOW_MASK      0x2000  // bit 13 — LIGHT_RWR_ALT_LOW
 
-// Address 0x4544: ECM indicator (bit14)
+// Address 0x4544: ECM indicator (bit14) — main ECM LED (separate from 32 SR LEDs)
 #define DCSBIOS_ECM_ADDR        0x4544
 #define DCSBIOS_ECM_MASK        0x4000  // bit 14
 
@@ -75,10 +75,10 @@ static bool dcsBiosIsInteresting(uint16_t addr) {
 // Returns true if the chunk [addr, addr+count) overlaps any interesting address
 static bool dcsBiosChunkIsInteresting(uint16_t addr, uint16_t count) {
   uint16_t end = addr + count;
-  return (DCSBIOS_GEAR_NL_ADDR >= addr && DCSBIOS_GEAR_NL_ADDR < end) ||
-         (DCSBIOS_GEAR_R_ADDR  >= addr && DCSBIOS_GEAR_R_ADDR  < end) ||
-         (DCSBIOS_TWA_ADDR     >= addr && DCSBIOS_TWA_ADDR     < end) ||
-         (DCSBIOS_ECM_ADDR     >= addr && DCSBIOS_ECM_ADDR     < end);
+  return (DCSBIOS_GEAR_NL_ADDR  >= addr && DCSBIOS_GEAR_NL_ADDR  < end) ||
+         (DCSBIOS_GEAR_R_ADDR   >= addr && DCSBIOS_GEAR_R_ADDR   < end) ||
+         (DCSBIOS_TWA_ADDR      >= addr && DCSBIOS_TWA_ADDR      < end) ||
+         (DCSBIOS_ECM_ADDR      >= addr && DCSBIOS_ECM_ADDR      < end);
 }
 
 // ================================================================
@@ -122,7 +122,7 @@ void dcsBiosReset() {
 //  Process One Byte
 // ================================================================
 
-void dcsBiosProcessByte(uint8_t b) {
+void processDcsBiosByte(uint8_t b) {
   switch (dcsBiosState) {
     case DCS_SYNC_1:
       if (b == 0x55) dcsBiosState = DCS_SYNC_2;

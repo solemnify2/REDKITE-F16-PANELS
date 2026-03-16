@@ -15,11 +15,9 @@
 
 #define BAUDRATE      1000000
 #define ALLOW_DEBUG   false
-#define BUFFERSIZE    1024
 #define MAX_PIN       55        // Teensy 4.1 max digital pin
 #define LOOP_DELAY_MS 50
-#define F4TS_TIMEOUT  6         // F4TS heartbeat timeout in seconds
-#define MCP_SUPPORT   1         // 1 = route F4TS LightBit through MCP23017, 0 = F4TS direct only
+#define SERIAL_TIMEOUT 6        // Serial heartbeat timeout in seconds
 
 
 // ================================================================
@@ -42,15 +40,11 @@ enum Panel {
   PNL_ALT_GEAR,   // Alt Gear panel (left aux console)
   PNL_CMDS,       // Countermeasures Dispenser (left aux console)
   PNL_TWA,        // Threat Warning Aux (left aux console)
-  PNL_ECM,        // Electronic Countermeasures (left console)
-  PNL_ELEC,       // Electrical panel (left console)
-  PNL_EXT_LIGHT,  // External Lighting panel (left console)
-  PNL_ICP,        // ICP / Instrument panel area
   PNL_COUNT
 };
 
 const char* const panelNames[] = {
-  "Standalone", "MISC", "Gear", "AltGear", "CMDS", "TWA", "ECM", "ELEC", "ExtLight", "ICP"
+  "Standalone", "MISC", "Gear", "AltGear", "CMDS", "TWA"
 };
 
 struct SwitchDef {
@@ -155,26 +149,11 @@ const SwitchDef switches[] = {
   {"CMDS CH",               PNL_CMDS,       SW_ON_OFF,      -1,  22,   0,  NULL},
   {"CMDS FL",               PNL_CMDS,       SW_ON_OFF,      -1,  23,   0,  NULL},
   {"CMDS JETT",             PNL_CMDS,       SW_ON_OFF,      -1,  14,   0,  NULL},
-// CMDS PRGM and CMDS MODE moved to analogBtnArrays[] (resistor ladder).
 
   // ---- Alt Gear Panel (left aux console) ----
   {"ALT GEAR Handle",       PNL_ALT_GEAR,   SW_ON_OFF,      -1,  33,   0,  NULL},
   // {"ALT GEAR Reset",        PNL_ALT_GEAR,   SW_ON_OFF,      -1,  15,   0,  NULL},
 
-  // ---- ECM Panel (MCP23017 device 1, addr 0x21) ----
-  // MCP pin mapping: GPA0–7 = 0–7, GPB0–7 = 8–15
-  {"ECM XMIT",              PNL_ECM,        SW_ON_OFF_ON,    1,   0,   1,  NULL},   // GPA0, GPA1  (1 / 2 / 3)
-  {"ECM RESET",             PNL_ECM,        SW_ON_OFF,       1,   2,   0,  NULL},   // GPA2
-  {"ECM OPR",               PNL_ECM,        SW_ON_OFF_ON,    1,   3,   4,  NULL},   // GPA3, GPA4  (OPR / STBY / OFF)
-  {"ECM BIT",               PNL_ECM,        SW_ON_OFF,       1,   5,   0,  NULL},   // GPA5
-  // ECM 1~5, BLANK, FRM, SPL → moved to analogBtnArrays[] (resistor ladder)
-
-  // ---- ELEC Panel (MCP23017 device 1, addr 0x21) ----
-  {"MAIN PWR",              PNL_ELEC,       SW_ON_OFF_ON,    1,   6,   7,  NULL},   // GPA6, GPA7  (MAIN PWR / BATT / OFF)
-  {"ELEC CAUTION RESET",    PNL_ELEC,       SW_ON_OFF,       1,   8,   0,  NULL},   // GPB0
-
-  // ---- Standalone ----
-  // {"Eject",                 PNL_NONE,       SW_ON_OFF,      -1,   0,   0,  NULL},
 };
 
 #define NUM_ROTARIES 0
@@ -188,9 +167,6 @@ const RotaryDef* const rotaries = nullptr;
 // Resistor ladder: 1kΩ series chain + 4.7kΩ pulldown per ladder.
 // ADC_k = 1023 × 4700 / (k × 1000 + 4700).  Calibrate with ALLOW_DEBUG = true.
 
-const char* const ecmBtnNames[] = {"ECM 1","ECM 2","ECM 3","ECM 4","ECM 5","ECM 6","ECM FRM","ECM SPL"};
-const int         ecmBtnValues[] = {843, 718, 624, 553, 496, 449, 411, 379};
-
 const char* const twaBtnNames[] = {"TWA SEARCH","TWA ACT/PWR","TWA ALT","TWA SYS PWR"};
 const int         twaBtnValues[] = {839, 710, 615, 543};
 
@@ -203,9 +179,8 @@ const int         cmdsPrgmBtnValues[] = {843, 718, 624, 553, 496};
 const AnalogBtnArrayDef analogBtnArrays[] = {
   // groupName       panel     pin  numBtn  btnNames           values              tolerance
   {"TWA Buttons",    PNL_TWA,  A10, 4,      twaBtnNames,       twaBtnValues,      30},
-  // {"CMDS MODE",      PNL_CMDS, A11, 6,      cmdsModeBtnNames,  cmdsModeBtnValues, 15},
-  // {"CMDS PRGM",      PNL_CMDS, A12, 5,      cmdsPrgmBtnNames,  cmdsPrgmBtnValues, 25},
-  {"ECM Buttons",    PNL_ECM,  A13, 8,      ecmBtnNames,       ecmBtnValues,      15},
+  {"CMDS MODE",      PNL_CMDS, A11, 8,      cmdsModeBtnNames,  cmdsModeBtnValues, 15},
+  {"CMDS PRGM",      PNL_CMDS, A12, 5,      cmdsPrgmBtnNames,  cmdsPrgmBtnValues, 25},
 };
 
 #define NUM_ANALOG_ARRAYS (sizeof(analogBtnArrays) / sizeof(analogBtnArrays[0]))
@@ -214,11 +189,14 @@ const AnalogBtnArrayDef analogBtnArrays[] = {
 // --- Analog Pots ---
 const PotDef pots[] = {
   // name      panel     pin   axis
-//  {"ECM DIM",  PNL_ECM,  A14,  AXIS_SL},   // ECM brightness — requires JOYSTICK_SIZE 64 if ICP pots active
 };
 
 // --- LEDs ---
-enum LedIdx { LI_NOSE_GEAR, LI_LEFT_GEAR, LI_RIGHT_GEAR, LI_TWA_POWER, LI_TWA_LOW, LI_TWA_SEARCH, LI_TWA_ACT, LI_ECM };
+enum LedIdx {
+  LI_NOSE_GEAR, LI_LEFT_GEAR, LI_RIGHT_GEAR,
+  LI_TWA_POWER, LI_TWA_LOW, LI_TWA_SEARCH, LI_TWA_ACT,
+  LI_ECM,
+};
 
 // pin 번호가 direct LED와 MCP LED에서 중복될 경우, MCP 쪽이 우선 적용됩니다.
 // (mcpIdx >= 0 이면 MCP LED로 처리, -1 이면 direct LED로 처리)
@@ -232,16 +210,15 @@ const LedDef leds[] = {
   {"TWA Search",   PNL_TWA,   36,  -1},
   {"TWA Act",      PNL_TWA,   37,  -1},
   {"ECM",          PNL_MISC,  11,   0},   // MCP device 0, MCP pin 11 (GPB3)
-  };
+};
 
 // --- MCP23017 Devices ---
-// Wire (SDA=18, SCL=19) — freed by moving CMDS MODE rotary to resistor ladder.
+// Wire (SDA=18, SCL=19)
 #define MCP_WIRE  Wire
 
 const McpDeviceDef mcpDevices[] = {
   // name              addr
   {"MISC Panel",       0x20},
-  {"ECM/ELEC Panel",   0x21},
 };
 
 // --- Pedal ---
@@ -282,16 +259,11 @@ const McpDeviceDef mcpDevices[] = {
 //  Includes
 // ================================================================
 
-#include <ArduinoJson.h>
 #include <Keyboard.h>
 #include <Wire.h>
 #include <usb_dev.h>
 
 extern volatile uint8_t usb_configuration;
-
-#include "F4TS/MemoryFree.h"
-#include "F4TS/F4ToSerialCommons.h"
-#include "F4TS/F4ToSerialLightBits.h"
 
 // ================================================================
 //  MCP23017 I/O Expander Driver
@@ -402,100 +374,78 @@ void writeLed(uint8_t idx, bool state) {
   }
 }
 
-// ================================================================
-//  F4TS LightBit with MCP23017 support
-// ================================================================
-//
-// When MCP_SUPPORT is enabled, F4TS LightBit messages are intercepted
-// here instead of being handled by the original F4TS parse functions.
-//
-// F4TS sends all LED pins in a single JSON message. Each pin is
-// classified as either MCP (on MCP23017 I/O expander) or direct
-// (Teensy GPIO), and routed accordingly:
-//   - MCP pins  → writeLed() → mcpWritePin() via I2C
-//   - Direct pins → add_lightBit() / digitalWriteFast() (same as F4TS original)
-//
-// When MCP_SUPPORT is disabled (0), the original F4TS functions
-// (parse_setup_LightBit / parse_set_LightBit) are used as-is.
-//
-#if MCP_SUPPORT
-
-// Per-pin routing table: maps each F4TS pin index to either
-//   an MCP LED (ledIdx >= 0) or a direct F4TS LightBit (directIdx >= 0)
-#define F4TS_PIN_MAP_MAX  32
-struct F4tsPinRoute {
-  int8_t ledIdx;      // >= 0: index in leds[] (MCP LED), -1: not MCP
-  int8_t directIdx;   // >= 0: index in F4TS lightBits[] (direct), -1: not direct
-};
-static F4tsPinRoute f4tsPinRoute[F4TS_PIN_MAP_MAX];
-static uint8_t      f4tsPinRouteCount = 0;
-
-// Check if a pin belongs to an MCP LED in leds[]. Returns leds[] index or -1.
-static int findMcpLedIdx(uint8_t pin) {
-  for (unsigned int i = 0; i < NUM_LEDS; i++) {
-    if (leds[i].pin == pin && leds[i].mcpIdx >= 0) return (int)i;
-  }
-  return -1;
-}
-
-// Clear MCP routing table (called alongside parse_destroy_lightBits)
-void parse_destroy_LightBit_MCP_and_direct() {
-  f4tsPinRouteCount = 0;
-}
-
-// Classify each pin as MCP or direct. Direct pins are registered
-// with F4TS add_lightBit(); MCP pins are stored in the routing table.
-void parse_setup_LightBit_MCP_and_direct(JsonVariant json) {
-  if (!json.is<JsonObject>()) return;
-  JsonArray pinsConfig = json.as<JsonObject>()["pins"].as<JsonArray>();
-  int8_t directCount = 0;
-  for (size_t i = 0; i < pinsConfig.size() && i < F4TS_PIN_MAP_MAX; i++) {
-    uint8_t pin = (uint8_t)pinsConfig[i].as<int>();
-    int mcpIdx = findMcpLedIdx(pin);
-    f4tsPinRoute[i].ledIdx    = (mcpIdx >= 0) ? (int8_t)mcpIdx : -1;
-    f4tsPinRoute[i].directIdx = (mcpIdx < 0)  ? directCount++  : -1;
-    if (mcpIdx < 0) add_lightBit(pin);  // direct pin → F4TS manages
-    f4tsPinRouteCount++;
-  }
-}
-
-// Route each mode value per pin:
-//   MCP pin    → writeLed() (I2C to MCP23017)
-//   Direct pin → digitalWriteFast() (Teensy GPIO, via F4TS lightBits[])
-void parse_set_LightBit_MCP_and_direct(JsonVariant json) {
-  if (!json.is<JsonObject>()) return;
-  JsonArray modes = json.as<JsonObject>()["mode"].as<JsonArray>();
-  for (uint8_t i = 0; i < f4tsPinRouteCount && i < modes.size(); i++) {
-    bool state = (modes[i].as<int>() != 0);
-    if (f4tsPinRoute[i].ledIdx >= 0) {
-      // MCP LED → I2C write
-      writeLed((uint8_t)f4tsPinRoute[i].ledIdx, state);
-    } else if (f4tsPinRoute[i].directIdx >= 0) {
-      // Direct Teensy pin → fast GPIO write
-      uint8_t di = (uint8_t)f4tsPinRoute[i].directIdx;
-      if (di < LightBitCount && lightBits[di].mode != state) {
-        lightBits[di].mode = state;
-        digitalWriteFast(lightBits[di].pin, state ? HIGH : LOW);
-      }
-    }
-  }
-}
-
-#endif // MCP_SUPPORT
-
 #include "DcsBios/DcsBiosParser.h"
 
 // ================================================================
 //  Protocol Auto-Detection
 // ================================================================
 
-enum Protocol { PROTO_UNKNOWN, PROTO_F4TS, PROTO_DCSBIOS };
+enum Protocol { PROTO_UNKNOWN, PROTO_DCSBIOS, PROTO_BMS_BIOS };
 
 static Protocol  currentProto     = PROTO_UNKNOWN;
 static uint8_t   syncCount        = 0;       // consecutive 0x55 bytes seen
+static bool      bmsBiosSync1     = false;   // true after seeing 0xAA
 static uint32_t  protoDetectStart = 0;       // millis() when first byte arrived
 static int       onlineBlinkRemain = 0;      // remaining ON/OFF toggles for TWA1 blink
 static int       onlineBlinkTimer  = 0;      // tick counter for 0.5s interval
+
+// ================================================================
+//  BMS-BIOS Protocol Handler
+// ================================================================
+//
+// Binary protocol from BMS Bridge:
+//   Sync:     0xAA 0xBB          (2 bytes)
+//   ledBits:  uint32 LE          (bits 0–16 for leds[])
+//   checksum: XOR of 4 payload bytes
+//   Total: 7 bytes per frame
+
+#define BB_FRAME_PAYLOAD  4   // 4 (ledBits)
+
+enum BmsBiosState { BB_SYNC_AA, BB_SYNC_BB, BB_PAYLOAD, BB_CHECKSUM };
+
+static BmsBiosState bbState = BB_SYNC_AA;
+static uint8_t      bbBuf[BB_FRAME_PAYLOAD];
+static uint8_t      bbBufIdx = 0;
+
+void bmsBiosReset() {
+  bbState  = BB_SYNC_AA;
+  bbBufIdx = 0;
+}
+
+void bmsBiosApply() {
+  uint32_t ledBits = bbBuf[0] | ((uint32_t)bbBuf[1] << 8) |
+                     ((uint32_t)bbBuf[2] << 16) | ((uint32_t)bbBuf[3] << 24);
+
+  for (unsigned int i = 0; i < NUM_LEDS; i++) {
+    writeLed(i, (ledBits >> i) & 1);
+  }
+}
+
+void processBmsBiosByte(uint8_t b) {
+  switch (bbState) {
+    case BB_SYNC_AA:
+      if (b == 0xAA) bbState = BB_SYNC_BB;
+      break;
+
+    case BB_SYNC_BB:
+      if (b == 0xBB) { bbBufIdx = 0; bbState = BB_PAYLOAD; }
+      else            bbState = BB_SYNC_AA;
+      break;
+
+    case BB_PAYLOAD:
+      bbBuf[bbBufIdx++] = b;
+      if (bbBufIdx >= BB_FRAME_PAYLOAD) bbState = BB_CHECKSUM;
+      break;
+
+    case BB_CHECKSUM: {
+      uint8_t xor_check = 0;
+      for (uint8_t i = 0; i < BB_FRAME_PAYLOAD; i++) xor_check ^= bbBuf[i];
+      if (xor_check == b) bmsBiosApply();
+      bbState = BB_SYNC_AA;
+      break;
+    }
+  }
+}
 
 // ================================================================
 //  Global State
@@ -725,13 +675,6 @@ void turnOffAllLeds() {
   for (unsigned int i = 0; i < NUM_LEDS; i++) {
     writeLed(i, false);
   }
-
-#ifdef USE_LIGHTBITS
-  for (int i = 0; i < LightBitCount; i++) {
-    digitalWriteFast(lightBits[i].pin, LOW);
-    lightBits[i].mode = false;
-  }
-#endif
 }
 
 void updateLedsOffline() {
@@ -761,108 +704,16 @@ void updateLedsOffline() {
 }
 
 // ================================================================
-//  F4TS Serial Communication
-// ================================================================
-
-/*
-int readSerialLine(int readch, char *buffer, int len) {
-  static int pos = 0;
-  int rpos;
-
-  if (readch > 0) {
-    switch (readch) {
-      case '\n': break;
-      case '\r':
-        rpos = pos;
-        pos = 0;
-        return rpos;
-      default:
-        if (pos < len - 1) {
-          buffer[pos++] = readch;
-          buffer[pos] = 0;
-        }
-    }
-    return 0;
-  }
-  return -1;
-}
-*/
-
-// Process one byte through the F4TS JSON readline parser.
-// Returns: >0 = complete JSON processed, 0 = partial, -1 = no data
-int processF4TSByte(int ch) {
-  static char buffer[BUFFERSIZE];
-  int ret = readline(ch, buffer, BUFFERSIZE);
-
-  if (ret <= 0) return ret;
-
-  JsonDocument doc;
-  DeserializationError error = deserializeJson(doc, buffer);
-  if (error) {
-    if (ALLOW_DEBUG) { Serial.print("Deserialization Error: "); Serial.println(error.c_str()); }
-    return 0;
-  }
-
-  ret = 1;
-
-#ifdef USE_MOTORS
-  if (doc["setup_stepper"].is<JsonVariant>())  parse_setup_command(doc["setup_stepper"]);
-  if (doc["setstep"].is<JsonVariant>())      { parse_setstep_command(doc["setstep"]); ret = 2; }
-#endif
-
-#ifdef USE_BCD
-  if (doc["setup_bcd"].is<JsonVariant>() && doc["digitOn"].is<JsonVariant>() && doc["digitOff"].is<JsonVariant>())
-    parse_setup_bcd(doc);
-  if (doc["set_seg"].is<JsonVariant>())        { parse_set_seg_command(doc["set_seg"]); ret = 3; }
-  if (doc["destroy_all_bcd"].is<JsonVariant>()) parse_destroy_bcd();
-#endif
-
-#ifdef USE_OLED_DISPLAY
-  if (doc["setup_display"].is<JsonVariant>())       parse_setup_display(doc["setup_display"]);
-  else if (doc["set_display"].is<JsonVariant>())  { parse_set_display(doc["set_display"]); ret = 4; }
-#endif
-
-#ifdef USE_LIGHTBITS
-  if (doc["setup_LightBit"].is<JsonVariant>()) {
-    parse_destroy_lightBits();                           // clear F4TS lightBits[] (common)
-  #if MCP_SUPPORT
-    parse_destroy_LightBit_MCP_and_direct();             // clear MCP routing table
-    parse_setup_LightBit_MCP_and_direct(doc["setup_LightBit"]);  // classify & register all pins
-  #else
-    parse_setup_LightBit(doc["setup_LightBit"]);         // F4TS original (direct only)
-  #endif
-  }
-  else if (doc["set_LightBit"].is<JsonVariant>()) {
-  #if MCP_SUPPORT
-    parse_set_LightBit_MCP_and_direct(doc["set_LightBit"]);  // route MCP & direct per-pin
-  #else
-    parse_set_LightBit(doc["set_LightBit"]);                  // F4TS original (direct only)
-  #endif
-    ret = 5;
-  }
-#endif
-
-#ifdef USE_MATRIX
-  if (doc["setup_matrix"].is<JsonVariant>())        parse_setup_matrice(doc["setup_matrix"]);
-  else if (doc["destroy_matrix"].is<JsonVariant>()) { parse_destroy_matrix(); ret = 6; }
-  else if (doc["update_matrix"].is<JsonVariant>())  parse_set_matrice(doc["update_matrix"]);
-#endif
-
-  if (ALLOW_DEBUG) { Serial.print("Free Memory = "); Serial.println(freeMemory()); }
-
-  return ret;
-}
-
-// ================================================================
 //  Protocol Detection & Serial Routing
 // ================================================================
 
 void resetProtocol() {
   currentProto = PROTO_UNKNOWN;
   syncCount    = 0;
+  bmsBiosSync1 = false;
   protoDetectStart = 0;
-  resetReadline();
   dcsBiosReset();
+  bmsBiosReset();
   turnOffAllLeds();
   if (ALLOW_DEBUG) Serial.println("[Proto] Reset to UNKNOWN");
 }
@@ -886,6 +737,7 @@ bool detectAndRouteSerial() {
         uint8_t b = (uint8_t)ch;
         if (b == 0x55) {
           syncCount++;
+          bmsBiosSync1 = false;
           if (syncCount >= 4) {
             currentProto = PROTO_DCSBIOS;
             syncCount = 0;
@@ -897,29 +749,36 @@ bool detectAndRouteSerial() {
             dcsBiosReset();
             dcsBiosState = DCS_ADDR_LOW;  // already past sync
           }
+        } else if (b == 0xAA) {
+          syncCount = 0;
+          bmsBiosSync1 = true;
+        } else if (b == 0xBB && bmsBiosSync1) {
+          // 0xAA 0xBB → BMS-BIOS protocol
+          currentProto = PROTO_BMS_BIOS;
+          bmsBiosSync1 = false;
+          writeLed(LI_TWA_POWER, 1);
+          writeLed(LI_TWA_LOW, 1);
+          onlineBlinkRemain = 8;
+          onlineBlinkTimer = 0;
+          if (ALLOW_DEBUG) Serial.println("[Proto] Detected BMS-BIOS");
+          bmsBiosReset();
+          // First frame sync already consumed; start at payload
+          bbBufIdx = 0;
+          bbState = BB_PAYLOAD;
         } else {
           syncCount = 0;
-          // Printable ASCII or JSON start → F4TS
-          if (b >= 0x20 && b < 0x7F) {
-            currentProto = PROTO_F4TS;
-            writeLed(LI_TWA_POWER, 1);
-            onlineBlinkRemain = 8;  // 4 blinks (ON/OFF × 4)
-            onlineBlinkTimer = 0;
-            if (ALLOW_DEBUG) Serial.println("[Proto] Detected F4TS");
-            // Feed this first byte to F4TS
-            processF4TSByte(ch);
-          }
-          // else: non-printable, non-0x55 → ignore, keep detecting
+          bmsBiosSync1 = false;
+          // else: non-sync byte → ignore, keep detecting
         }
         break;
       }
 
-      case PROTO_F4TS:
-        processF4TSByte(ch);
+      case PROTO_DCSBIOS:
+        processDcsBiosByte((uint8_t)ch);
         break;
 
-      case PROTO_DCSBIOS:
-        dcsBiosProcessByte((uint8_t)ch);
+      case PROTO_BMS_BIOS:
+        processBmsBiosByte((uint8_t)ch);
         break;
     }
   }
@@ -1057,7 +916,7 @@ void loop() {
 
   // --- Serial communication & LED control ---
   static int heartbeat = 0;
-  const int timeoutTicks = (1000 / LOOP_DELAY_MS) * F4TS_TIMEOUT;
+  const int timeoutTicks = (1000 / LOOP_DELAY_MS) * SERIAL_TIMEOUT;
 
   if (detectAndRouteSerial()) {
     heartbeat = 0;
