@@ -1,7 +1,7 @@
 # REDKITE F16 PANELS
 
 Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
-**Falcon BMS**(F4ToSerial)와 **DCS World**(DCS-BIOS) 듀얼 심 지원, 프로토콜 자동 감지.
+**Falcon BMS**(BMS-BIOS)와 **DCS World**(DCS-BIOS) 듀얼 심 지원, 프로토콜 자동 감지.
 
 ## Features
 
@@ -12,7 +12,7 @@ Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
 - **저항 래더 입력** — 아날로그 핀 1개로 다중 버튼 인식 (로터리 스위치 대체)
 - **페달 처리** — 러더 + 독립 브레이크 합성, 자동 캘리브레이션
 - **USB Suspend 감지** — PC 절전 시 LED 소등 및 MCU 저전력 모드 진입
-- **프로토콜 자동 감지** — F4TS(JSON) / DCS-BIOS(바이너리) 자동 판별
+- **프로토콜 자동 감지** — BMS-BIOS(바이너리) / DCS-BIOS(바이너리) 자동 판별
 
 ## Supported Panels
 
@@ -22,9 +22,7 @@ Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
 | Alt Gear | Switch | ALT Gear Handle / Reset |
 | MISC | Switch, LED (MCP23017) | Master ARM, Laser ARM, RF, Autopilot Pitch/Roll 등 |
 | CMDS | Switch, Analog Ladder | RWR, JMR, MWS, JETT, MODE, PRGM 등 |
-| TWA | Analog Ladder | Threat Warning Aux — Search, Act/Pwr, Alt, Sys Pwr |
-| ECM | Switch, Analog Ladder, Pot | OPR, XMIT, Reset, BIT, ECM 1~6, FRM, SPL, DIM |
-| ELEC | Switch | Main PWR, Caution Reset |
+| TWA | Analog Ladder, LED | Threat Warning Aux — Search, Act/Pwr, Alt, Sys Pwr |
 | Pedal | Analog | Rudder + Left/Right Brake (auto calibration) |
 
 ## Hardware
@@ -40,17 +38,15 @@ Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
 
 | Pin | Function |
 |-----|----------|
-| 0 | Eject |
-| 1–15 | Gear / Alt Gear 패널 스위치 |
+| 1–10 | Gear 패널 스위치 |
+| 11 | Alt Gear Handle |
+| 12–15 | CMDS 패널 스위치 |
 | 16, 17, 20 | Gear LED (Nose, Left, Right) |
 | 18 (SDA), 19 (SCL) | I2C — MCP23017 |
-| 21–37 | CMDS, ECM, ELEC 패널 스위치 |
-| A10, A11 | Pedal (Left, Right) |
-| A12 | TWA 저항 래더 |
-| A13 | ECM 저항 래더 |
-| A14 | ECM DIM 포텐셔미터 |
-| A15 | CMDS MODE 저항 래더 |
-| A16 | CMDS PRGM 저항 래더 |
+| 21–24 | CMDS 패널 스위치 |
+| A10 | TWA 저항 래더 |
+| A11 | CMDS MODE 저항 래더 |
+| A12 | CMDS PRGM 저항 래더 |
 
 ## Build
 
@@ -61,7 +57,6 @@ Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
    - **Board**: Teensy 4.1
    - **USB Type**: Keyboard + Mouse + Joystick
 3. 필요 라이브러리:
-   - `ArduinoJson`
    - `Wire` (built-in)
    - `Keyboard` (built-in)
 
@@ -83,7 +78,7 @@ const SwitchDef switches[] = {
 // 아날로그 버튼 배열 추가 예시
 const AnalogBtnArrayDef analogBtnArrays[] = {
   // groupName    panel      pin  numBtn  btnNames       values         tolerance
-  {"My Buttons",  PNL_ECM,   A13, 4,      myBtnNames,    myBtnValues,   20},
+  {"My Buttons",  PNL_CMDS,  A11, 4,      myBtnNames,    myBtnValues,   20},
 };
 ```
 
@@ -91,16 +86,27 @@ const AnalogBtnArrayDef analogBtnArrays[] = {
 
 ## Protocol Support
 
-### Falcon BMS (F4ToSerial)
+### Falcon BMS (BMS-BIOS)
 
-- JSON 기반 시리얼 통신 (1Mbaud)
-- Stepper Motors, BCD 디스플레이, OLED, LightBit, Matrix LED 지원
-- F4ToSerial PC 프로그램 필요
+- 바이너리 프로토콜, `0xAA 0xBB` sync 2바이트로 자동 감지
+- Python 브릿지(`tools/bms_bridge.py`)가 BMS 공유 메모리에서 LED 상태를 읽어 Teensy로 전송
+- 사용법:
+  ```
+  pip install pyserial
+  python tools/bms_bridge.py COM5
+  python tools/bms_bridge.py COM5 --hz 20 --debug
+  ```
+- BMS 비행 중 실행 필요
 
 ### DCS World (DCS-BIOS)
 
 - 바이너리 프로토콜, `0x55` sync 4바이트로 자동 감지
-- DCS-BIOS 설치 및 설정 필요
+- DCS-BIOS 설치 및 UDP 브릿지(`tools/dcsbios_bridge.py`) 필요
+- 사용법:
+  ```
+  pip install pyserial
+  python tools/dcsbios_bridge.py COM5
+  ```
 
 시뮬레이터 전환 시 6초 타임아웃 후 자동 재감지.
 
@@ -110,26 +116,15 @@ const AnalogBtnArrayDef analogBtnArrays[] = {
 REDKITE_F16_PANELS/
 ├── REDKITE_F16_PANELS.ino   # 메인 프로그램
 ├── name.c                    # USB 디바이스명 설정
-├── F4TS/                     # F4ToSerial 라이브러리
-│   ├── F4ToSerial.ino
-│   ├── F4ToSerialCommons.h
-│   ├── F4ToSerialLightBits.h
-│   ├── F4ToSerialBCD.h
-│   ├── F4ToSerialMotors.h
-│   ├── F4ToSerialOledDisplays.h
-│   ├── F4ToSerialMatrixLightBits.h
-│   ├── F4ToSerialFont_ded.h
-│   ├── F4ToSerialFont_ffi.h
-│   ├── F4ToserialFont_pfl.h
-│   ├── MemoryFree.cpp / .h
-│   └── digitalWriteFast.h
 ├── DcsBios/
 │   └── DcsBiosParser.h       # DCS-BIOS 프로토콜 파서
+├── tools/
+│   ├── bms_bridge.py         # Falcon BMS 공유메모리 → Teensy 시리얼 브릿지
+│   ├── dcsbios_bridge.py     # DCS-BIOS UDP → Teensy 시리얼 브릿지
+│   └── dcsbios_test_recv.py  # DCS-BIOS UDP 수신 테스트
 └── backup/                    # 이전 버전 아카이브
 ```
 
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
-
-**Note:** The `F4TS/` directory contains code from the [F4ToSerial](https://github.com/Music-Junky/F4ToSerial) project by Music-Junky. This code is not covered by the MIT License of this repository and is subject to its original author's terms. Please refer to the F4ToSerial project for its licensing information.
