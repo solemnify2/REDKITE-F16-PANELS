@@ -19,6 +19,7 @@
 #define MAX_PIN       55        // Teensy 4.1 max digital pin
 #define LOOP_DELAY_MS 50
 #define F4TS_TIMEOUT  6         // F4TS heartbeat timeout in seconds
+#define MCP_SUPPORT   1         // 1 = route F4TS LightBit through MCP23017, 0 = F4TS direct only
 
 
 // ================================================================
@@ -160,16 +161,17 @@ const SwitchDef switches[] = {
   {"ALT GEAR Handle",       PNL_ALT_GEAR,   SW_ON_OFF,      -1,  33,   0,  NULL},
   // {"ALT GEAR Reset",        PNL_ALT_GEAR,   SW_ON_OFF,      -1,  15,   0,  NULL},
 
-  // ---- ECM Panel (left console) ----
-  // {"ECM XMIT",              PNL_ECM,        SW_ON_OFF_ON,   -1,  31,  32,  NULL},   // 1 / 2 / 3
-  // {"ECM RESET",             PNL_ECM,        SW_ON_OFF,      -1,  33,   0,  NULL},
-  // {"ECM OPR",               PNL_ECM,        SW_ON_OFF_ON,   -1,  29,  30,  NULL},   // OPR / STBY / OFF
-  // {"ECM BIT",               PNL_ECM,        SW_ON_OFF,      -1,  34,   0,  NULL},
+  // ---- ECM Panel (MCP23017 device 1, addr 0x21) ----
+  // MCP pin mapping: GPA0–7 = 0–7, GPB0–7 = 8–15
+  {"ECM XMIT",              PNL_ECM,        SW_ON_OFF_ON,    1,   0,   1,  NULL},   // GPA0, GPA1  (1 / 2 / 3)
+  {"ECM RESET",             PNL_ECM,        SW_ON_OFF,       1,   2,   0,  NULL},   // GPA2
+  {"ECM OPR",               PNL_ECM,        SW_ON_OFF_ON,    1,   3,   4,  NULL},   // GPA3, GPA4  (OPR / STBY / OFF)
+  {"ECM BIT",               PNL_ECM,        SW_ON_OFF,       1,   5,   0,  NULL},   // GPA5
   // ECM 1~5, BLANK, FRM, SPL → moved to analogBtnArrays[] (resistor ladder)
 
-  // ---- ELEC Panel (left console) ----
-  // {"MAIN PWR",              PNL_ELEC,       SW_ON_OFF_ON,   -1,  35,  36,  NULL},   // MAIN PWR / BATT / OFF
-  // {"ELEC CAUTION RESET",    PNL_ELEC,       SW_ON_OFF,      -1,  37,   0,  NULL},
+  // ---- ELEC Panel (MCP23017 device 1, addr 0x21) ----
+  {"MAIN PWR",              PNL_ELEC,       SW_ON_OFF_ON,    1,   6,   7,  NULL},   // GPA6, GPA7  (MAIN PWR / BATT / OFF)
+  {"ELEC CAUTION RESET",    PNL_ELEC,       SW_ON_OFF,       1,   8,   0,  NULL},   // GPB0
 
   // ---- Standalone ----
   // {"Eject",                 PNL_NONE,       SW_ON_OFF,      -1,   0,   0,  NULL},
@@ -203,10 +205,11 @@ const AnalogBtnArrayDef analogBtnArrays[] = {
   {"TWA Buttons",    PNL_TWA,  A10, 4,      twaBtnNames,       twaBtnValues,      30},
   // {"CMDS MODE",      PNL_CMDS, A11, 6,      cmdsModeBtnNames,  cmdsModeBtnValues, 15},
   // {"CMDS PRGM",      PNL_CMDS, A12, 5,      cmdsPrgmBtnNames,  cmdsPrgmBtnValues, 25},
-  // {"ECM Buttons",    PNL_ECM,  A13, 8,      ecmBtnNames,       ecmBtnValues,      15},
+  {"ECM Buttons",    PNL_ECM,  A13, 8,      ecmBtnNames,       ecmBtnValues,      15},
 };
 
 #define NUM_ANALOG_ARRAYS (sizeof(analogBtnArrays) / sizeof(analogBtnArrays[0]))
+
 
 // --- Analog Pots ---
 const PotDef pots[] = {
@@ -217,6 +220,8 @@ const PotDef pots[] = {
 // --- LEDs ---
 enum LedIdx { LI_NOSE_GEAR, LI_LEFT_GEAR, LI_RIGHT_GEAR, LI_TWA_POWER, LI_TWA_LOW, LI_TWA_SEARCH, LI_TWA_ACT, LI_ECM };
 
+// pin 번호가 direct LED와 MCP LED에서 중복될 경우, MCP 쪽이 우선 적용됩니다.
+// (mcpIdx >= 0 이면 MCP LED로 처리, -1 이면 direct LED로 처리)
 const LedDef leds[] = {
   // name          panel      pin  mcpIdx
   {"Nose Gear",    PNL_GEAR,  30,  -1},
@@ -234,8 +239,9 @@ const LedDef leds[] = {
 #define MCP_WIRE  Wire
 
 const McpDeviceDef mcpDevices[] = {
-  // name          addr
-  {"MISC Panel",   0x20},
+  // name              addr
+  {"MISC Panel",       0x20},
+  {"ECM/ELEC Panel",   0x21},
 };
 
 // --- Pedal ---
@@ -257,7 +263,7 @@ const McpDeviceDef mcpDevices[] = {
 // Pedal brake mode: activates when *PEDAL_BRAKE_SW_REF equals PEDAL_BRAKE_SW_VALUE
 // Set PEDAL_BRAKE_SW_REF to NULL to disable switch-linked brake mode
 #define PEDAL_BRAKE_SW_REF    (&swLandingLight)
-#define PEDAL_BRAKE_SW_VALUE  (-1)    // landing light UP position
+#define PEDAL_BRAKE_SW_VALUE  (1)    // landing light UP position
 
 // --- Offline LED ---
 #define ECM_LED_IDX           LI_ECM
@@ -395,6 +401,87 @@ void writeLed(uint8_t idx, bool state) {
     digitalWrite(leds[idx].pin, state ? HIGH : LOW);
   }
 }
+
+// ================================================================
+//  F4TS LightBit with MCP23017 support
+// ================================================================
+//
+// When MCP_SUPPORT is enabled, F4TS LightBit messages are intercepted
+// here instead of being handled by the original F4TS parse functions.
+//
+// F4TS sends all LED pins in a single JSON message. Each pin is
+// classified as either MCP (on MCP23017 I/O expander) or direct
+// (Teensy GPIO), and routed accordingly:
+//   - MCP pins  → writeLed() → mcpWritePin() via I2C
+//   - Direct pins → add_lightBit() / digitalWriteFast() (same as F4TS original)
+//
+// When MCP_SUPPORT is disabled (0), the original F4TS functions
+// (parse_setup_LightBit / parse_set_LightBit) are used as-is.
+//
+#if MCP_SUPPORT
+
+// Per-pin routing table: maps each F4TS pin index to either
+//   an MCP LED (ledIdx >= 0) or a direct F4TS LightBit (directIdx >= 0)
+#define F4TS_PIN_MAP_MAX  32
+struct F4tsPinRoute {
+  int8_t ledIdx;      // >= 0: index in leds[] (MCP LED), -1: not MCP
+  int8_t directIdx;   // >= 0: index in F4TS lightBits[] (direct), -1: not direct
+};
+static F4tsPinRoute f4tsPinRoute[F4TS_PIN_MAP_MAX];
+static uint8_t      f4tsPinRouteCount = 0;
+
+// Check if a pin belongs to an MCP LED in leds[]. Returns leds[] index or -1.
+static int findMcpLedIdx(uint8_t pin) {
+  for (unsigned int i = 0; i < NUM_LEDS; i++) {
+    if (leds[i].pin == pin && leds[i].mcpIdx >= 0) return (int)i;
+  }
+  return -1;
+}
+
+// Clear MCP routing table (called alongside parse_destroy_lightBits)
+void parse_destroy_LightBit_MCP_and_direct() {
+  f4tsPinRouteCount = 0;
+}
+
+// Classify each pin as MCP or direct. Direct pins are registered
+// with F4TS add_lightBit(); MCP pins are stored in the routing table.
+void parse_setup_LightBit_MCP_and_direct(JsonVariant json) {
+  if (!json.is<JsonObject>()) return;
+  JsonArray pinsConfig = json.as<JsonObject>()["pins"].as<JsonArray>();
+  int8_t directCount = 0;
+  for (size_t i = 0; i < pinsConfig.size() && i < F4TS_PIN_MAP_MAX; i++) {
+    uint8_t pin = (uint8_t)pinsConfig[i].as<int>();
+    int mcpIdx = findMcpLedIdx(pin);
+    f4tsPinRoute[i].ledIdx    = (mcpIdx >= 0) ? (int8_t)mcpIdx : -1;
+    f4tsPinRoute[i].directIdx = (mcpIdx < 0)  ? directCount++  : -1;
+    if (mcpIdx < 0) add_lightBit(pin);  // direct pin → F4TS manages
+    f4tsPinRouteCount++;
+  }
+}
+
+// Route each mode value per pin:
+//   MCP pin    → writeLed() (I2C to MCP23017)
+//   Direct pin → digitalWriteFast() (Teensy GPIO, via F4TS lightBits[])
+void parse_set_LightBit_MCP_and_direct(JsonVariant json) {
+  if (!json.is<JsonObject>()) return;
+  JsonArray modes = json.as<JsonObject>()["mode"].as<JsonArray>();
+  for (uint8_t i = 0; i < f4tsPinRouteCount && i < modes.size(); i++) {
+    bool state = (modes[i].as<int>() != 0);
+    if (f4tsPinRoute[i].ledIdx >= 0) {
+      // MCP LED → I2C write
+      writeLed((uint8_t)f4tsPinRoute[i].ledIdx, state);
+    } else if (f4tsPinRoute[i].directIdx >= 0) {
+      // Direct Teensy pin → fast GPIO write
+      uint8_t di = (uint8_t)f4tsPinRoute[i].directIdx;
+      if (di < LightBitCount && lightBits[di].mode != state) {
+        lightBits[di].mode = state;
+        digitalWriteFast(lightBits[di].pin, state ? HIGH : LOW);
+      }
+    }
+  }
+}
+
+#endif // MCP_SUPPORT
 
 #include "DcsBios/DcsBiosParser.h"
 
@@ -541,7 +628,7 @@ void processSwitches() {
         int s2 = readSwPin(sw, sw.pin2);
         Joystick.button(btn,     !s1);
         Joystick.button(btn + 1, !s2);
-        if (sw.stateRef) *sw.stateRef = -(!s1) + (!s2);   // -1 = up, 0 = center, 1 = down
+        if (sw.stateRef) *sw.stateRef = -(!s1) + (!s2);   // -1 = dn, 0 = center, 1 = up
         break;
       }
     }
@@ -737,10 +824,22 @@ int processF4TSByte(int ch) {
 
 #ifdef USE_LIGHTBITS
   if (doc["setup_LightBit"].is<JsonVariant>()) {
-    parse_destroy_lightBits();
-    parse_setup_LightBit(doc["setup_LightBit"]);
+    parse_destroy_lightBits();                           // clear F4TS lightBits[] (common)
+  #if MCP_SUPPORT
+    parse_destroy_LightBit_MCP_and_direct();             // clear MCP routing table
+    parse_setup_LightBit_MCP_and_direct(doc["setup_LightBit"]);  // classify & register all pins
+  #else
+    parse_setup_LightBit(doc["setup_LightBit"]);         // F4TS original (direct only)
+  #endif
   }
-  else if (doc["set_LightBit"].is<JsonVariant>()) { parse_set_LightBit(doc["set_LightBit"]); ret = 5; }
+  else if (doc["set_LightBit"].is<JsonVariant>()) {
+  #if MCP_SUPPORT
+    parse_set_LightBit_MCP_and_direct(doc["set_LightBit"]);  // route MCP & direct per-pin
+  #else
+    parse_set_LightBit(doc["set_LightBit"]);                  // F4TS original (direct only)
+  #endif
+    ret = 5;
+  }
 #endif
 
 #ifdef USE_MATRIX
