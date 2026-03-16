@@ -93,8 +93,19 @@ def build_frame(led_bits: int) -> bytes:
 # ================================================================
 
 def open_shm():
-    """Open Falcon BMS shared memory. Returns mmap object or None."""
+    """Open existing Falcon BMS shared memory (never creates new).
+    Returns mmap object or None."""
     try:
+        # Use OpenFileMappingW to open ONLY if it already exists.
+        # mmap.mmap(-1, ...) calls CreateFileMapping which creates new
+        # shared memory if absent, preventing BMS from launching.
+        kernel32 = ctypes.windll.kernel32
+        FILE_MAP_READ = 0x0004
+        handle = kernel32.OpenFileMappingW(FILE_MAP_READ, False, SHM_NAME)
+        if not handle:
+            return None
+        kernel32.CloseHandle(handle)
+        # Now safe to open with mmap — shared memory confirmed to exist
         shm = mmap.mmap(-1, SHM_SIZE, tagname=SHM_NAME, access=mmap.ACCESS_READ)
         return shm
     except Exception:
