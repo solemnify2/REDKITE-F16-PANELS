@@ -5,6 +5,10 @@
 Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
 **Falcon BMS**(BMS-BIOS)와 **DCS World**(DCS-BIOS) 듀얼 심 지원, 프로토콜 자동 감지.
 
+## Design Goals
+
+VR 전용 미니멀 콕핏을 지향합니다. VR 헤드셋을 착용한 상태에서 손을 뻗은 위치에 물리 스위치가 있도록 실기 1:1 스케일로 제작했습니다. 사용하지 않을 때 쉽게 치울 수 있는 이동식/수납식 구조이며, 인게임에서 시현되는 계기류(디스플레이, 게이지 등)는 되도록 포함하지 않고 스위치와 LED 위주로 구성했습니다. 예를 들어 DED, RWR 등은 VR 내에서 충분히 읽을 수 있으므로 별도 하드웨어를 제작하지 않았습니다. 단, MFD는 예외로 물리 LCD를 장착했는데, VR passthrough 시 손이 인게임 디스플레이를 가리기 때문입니다. MFD용 square LCD는 Alibaba에서 구매한 [GX076-30MB](https://www.alibaba.com/product-detail/7-6-Inch-Square-LCD-Display_1601257654342.html) 모델입니다.
+
 ## Features
 
 - **USB Joystick + Keyboard** 복합 디바이스 (Windows 자동 인식)
@@ -27,22 +31,71 @@ Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
 | TWA | Analog Ladder, LED | Threat Warning Aux — Search, Act/Pwr, Low, Power |
 | Pedal | Analog | Rudder + Left/Right Brake (auto calibration) |
 
+## Hardware
+
+### Panel Sources
+
+패널은 아래 콕핏 빌더 전문 업체에서 구매할 수 있습니다.
+
+- [PC Flights](https://pcflights.com/flight-simulator-cockpit-panels/f-16c-viper-home-cockpit-panels/) — F-16C 패널 전문, 미국/해외 배송
+
 | MISC | Gear | CMDS |
 |:----:|:----:|:----:|
 | [![MISC](https://pcflights.com/image/cache/catalog/panels/f-16c_viper_misc_panel-600x400.jpg)](https://pcflights.com/f-16c-viper-miscellaneous-misc-panel-flight-sim-part/) | [![Gear](https://pcflights.com/image/cache/catalog/panels/f-16c_viper_landing_gear_panel-600x400.jpg)](https://pcflights.com/f-16c-viper-landing-gear-panel-flight-simulator-module/) | [![CMDS](https://pcflights.com/image/cache/catalog/panels/f-16c_viper_cmds_control_panel-600x400.jpg)](https://pcflights.com/f-16c-viper-cmds-control-panel-module/) |
 
-## Hardware
+- [HispaPanel](https://hispapanels.com/tienda/en/20-f-16-fighting-falcon) — 레이저 커팅/각인 패널 키트, 커스텀 제작 가능
+- [TEK Creations](https://tekcreations.space/shop/) — LED 백라이트 패널, DCS-BIOS 레디, [Etsy](https://www.etsy.com/shop/TekCreations)에서도 구매 가능
 
-### Requirements
+### Components
 
-- **Teensy 4.1**
-- MCP23017 I2C I/O Expander (MISC 패널용, 선택)
-- 저항 래더 회로 (1kΩ 직렬 + 4.7kΩ 풀다운, 아날로그 버튼용)
-- 외부 풀업 저항 4.7kΩ (I2C SDA/SCL, MCP23017 사용 시 권장)
+주요 부품 (MISC, Gear, CMDS, TWA, HMCS, Alt Gear 패널):
 
-### Pin Map
+| 부품 | 수량 | 비고 |
+|------|------|------|
+| Teensy 4.1 | 1 | MCU |
+| MCP23017 I2C I/O Expander | 1 | MISC 패널용, 선택 |
+| 저항 1kΩ / 4.7kΩ (각 100개 세트) | 1 / 1 | 래더 직렬, 풀다운, I2C 풀업 |
+| [GX076-30MB](https://www.alibaba.com/product-detail/7-6-Inch-Square-LCD-Display_1601257654342.html) 7.6" Square LCD | 2 | MFD용, Alibaba |
+| 토글 스위치 (On-Off) | 13 | |
+| 토글 스위치 (On-Off-On) | 6 | |
+| 푸시 스위치 (7mm) | 6 | |
+| 코리 스위치 | 1 | [HispaPanel](https://hispapanels.com) |
+| 택타일 스위치 (6x6x4.5) | 4 | |
+| 리밋 스위치 (12.8x6.5) | 3 | |
+| 로터리 SR26 1P12T | 2 | |
+| 포텐셔미터 (10k) | 1 | |
+| 3mm LED (Green / Yellow) | 5 / 1 | |
+| 5mm LED (Red / Green) | 1 / 4 | |
+| 3mm 고휘도 LED Green (백라이트) | ~100 | 필요수량만큼 |
+| SMD 저항 (220Ω / 2.2kΩ / 10kΩ) | 4 / 4 / 1 | |
 
-상세 핀 배치는 [docs/teensy_direct_pins.txt](docs/teensy_direct_pins.txt) 참조.
+전체 부품 목록은 [docs/components.xlsx](docs/components.xlsx) 참조.
+
+### 3D Printed Parts
+
+`3d stl/` 폴더에 콕핏 패널 인클로저 및 스탠드의 3D 프린트용 STL 파일이 포함되어 있습니다.
+
+Stand는 각각 Left/Right Enclosure 뒷면에 부착하는 지지대입니다. 에폭시 접착제로 접합을 권장합니다.
+
+| Part | Preview |
+|------|---------|
+| Left Stand | [![Left Stand](3d%20stl/Left%20Stand.png)](3d%20stl/Left%20Stand.stl) |
+| Left Stand (new) | [![Left Stand new](3d%20stl/Left%20Stand%20-%20new.png)](3d%20stl/Left%20Stand%20-%20new.stl) |
+| Right Stand | [![Right Stand](3d%20stl/Right%20Stand.png)](3d%20stl/Right%20Stand.stl) |
+| Right Stand (new) | [![Right Stand new](3d%20stl/Right%20Stand-%20new.png)](3d%20stl/Right%20Stand-%20new.stl) |
+| Left Enclosure | ![Left Enclosure](3d%20stl/Left%20Enclosure.png) |
+| Right Enclosure (new) | ![Right Enclosure new](3d%20stl/Right%20Enclosure%20-%20new.png) |
+| Enclosure OnePiece | [![Enclosure OnePiece](3d%20stl/Enclosure%20-%20%20OnePiece2.png)](3d%20stl/Enclosure%20-%20%20OnePiece2.stl) |
+
+> **Note:** Left Enclosure, Right Enclosure의 STL 파일은 Cults3D에서 구매한 모델을 수정하여 제작한 것이므로 저작권 보호를 위해 재배포하지 않습니다. 미리보기 이미지만 참고용으로 포함되어 있습니다.
+
+#### 3D Part Sources
+
+3D 프린트 파트는 [Cults3D](https://cults3d.com)에서 구할 수 있습니다.
+
+- [Greenisland](https://cults3d.com/en/users/Greenisland/3d-models) — F-16 콕핏 거의 전체 파트 판매
+- [Legarsdusofa](https://cults3d.com/en/design-collections/Legarsdusofa/f-16-cockpit-simulator) — F-16 콕핏 거의 전체 파트 판매
+- [The_Viper_Project](https://cults3d.com/en/users/The_Viper_Project/3d-models) — 버튼 노브, 스위치 캡, Dsub 캡 등 무료 제공
 
 ## Build
 
@@ -55,6 +108,14 @@ Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
 3. 필요 라이브러리:
    - `Wire` (built-in)
    - `Keyboard` (built-in)
+
+### Pin Map
+
+상세 핀 배치는 [docs/teensy_direct_pins.txt](docs/teensy_direct_pins.txt) 참조.
+
+### Joystick Button Layout
+
+조이스틱 버튼/축/LED 배치는 [docs/joystick.txt](docs/joystick.txt) 참조.
 
 ### Upload
 
@@ -81,6 +142,8 @@ const AnalogBtnArrayDef analogBtnArrays[] = {
 패널을 비활성화하려면 해당 항목을 주석 처리하면 됩니다.
 
 ## Protocol Support
+
+스위치/버튼 입력은 USB Joystick으로 직접 전달되지만, LED 상태는 시뮬레이터에서 받아와야 합니다. Python 브릿지가 시뮬레이터의 내부 데이터를 읽어 시리얼로 Teensy에 전송하고, Teensy는 수신된 프로토콜(BMS-BIOS / DCS-BIOS)을 자동 감지하여 LED를 제어합니다.
 
 ### Why not F4ToSerial?
 
@@ -132,37 +195,6 @@ REDKITE_F16_PANELS/
 └── backup/                    # 이전 버전 아카이브
 ```
 
-## Panel Sources
-
-패널은 아래 콕핏 빌더 전문 업체에서 구매할 수 있습니다.
-
-- [PC Flights](https://pcflights.com/flight-simulator-cockpit-panels/f-16c-viper-home-cockpit-panels/) — F-16C 패널 전문, 미국/해외 배송
-- [HispaPanel](https://hispapanels.com/tienda/en/20-f-16-fighting-falcon) — 레이저 커팅/각인 패널 키트, 커스텀 제작 가능
-- [TEK Creations](https://tekcreations.space/shop/) — LED 백라이트 패널, DCS-BIOS 레디, [Etsy](https://www.etsy.com/shop/TekCreations)에서도 구매 가능
-
-## 3D Printed Parts
-
-`3d stl/` 폴더에 콕핏 패널 인클로저 및 스탠드의 3D 프린트용 STL 파일이 포함되어 있습니다.
-
-| Part | Preview |
-|------|---------|
-| Left Stand | [![Left Stand](3d%20stl/Left%20Stand.png)](3d%20stl/Left%20Stand.stl) |
-| Left Stand (new) | [![Left Stand new](3d%20stl/Left%20Stand%20-%20new.png)](3d%20stl/Left%20Stand%20-%20new.stl) |
-| Right Stand | [![Right Stand](3d%20stl/Right%20Stand.png)](3d%20stl/Right%20Stand.stl) |
-| Right Stand (new) | [![Right Stand new](3d%20stl/Right%20Stand-%20new.png)](3d%20stl/Right%20Stand-%20new.stl) |
-| Left Enclosure | ![Left Enclosure](3d%20stl/Left%20Enclosure.png) |
-| Right Enclosure (new) | ![Right Enclosure new](3d%20stl/Right%20Enclosure%20-%20new.png) |
-| Enclosure OnePiece | [![Enclosure OnePiece](3d%20stl/Enclosure%20-%20%20OnePiece2.png)](3d%20stl/Enclosure%20-%20%20OnePiece2.stl) |
-
-> **Note:** Left Enclosure, Right Enclosure의 STL 파일은 Cults3D에서 구매한 모델을 수정하여 제작한 것이므로 저작권 보호를 위해 재배포하지 않습니다. 미리보기 이미지만 참고용으로 포함되어 있습니다.
-
-### 3D Part Sources
-
-3D 프린트 파트는 [Cults3D](https://cults3d.com)에서 구할 수 있습니다.
-
-- [Greenisland](https://cults3d.com/en/users/Greenisland/3d-models) — F-16 콕핏 거의 전체 파트 판매
-- [Legarsdusofa](https://cults3d.com/en/design-collections/Legarsdusofa/f-16-cockpit-simulator) — F-16 콕핏 거의 전체 파트 판매
-- [The_Viper_Project](https://cults3d.com/en/users/The_Viper_Project/3d-models) — 버튼 노브, 스위치 캡, Dsub 캡 등 무료 제공
 
 ## License
 
