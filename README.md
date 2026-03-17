@@ -27,6 +27,10 @@ Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
 | TWA | Analog Ladder, LED | Threat Warning Aux — Search, Act/Pwr, Low, Power |
 | Pedal | Analog | Rudder + Left/Right Brake (auto calibration) |
 
+| MISC | Gear | CMDS |
+|:----:|:----:|:----:|
+| [![MISC](https://pcflights.com/image/cache/catalog/panels/f-16c_viper_misc_panel-600x400.jpg)](https://pcflights.com/f-16c-viper-miscellaneous-misc-panel-flight-sim-part/) | [![Gear](https://pcflights.com/image/cache/catalog/panels/f-16c_viper_landing_gear_panel-600x400.jpg)](https://pcflights.com/f-16c-viper-landing-gear-panel-flight-simulator-module/) | [![CMDS](https://pcflights.com/image/cache/catalog/panels/f-16c_viper_cmds_control_panel-600x400.jpg)](https://pcflights.com/f-16c-viper-cmds-control-panel-module/) |
+
 ## Hardware
 
 ### Requirements
@@ -38,22 +42,7 @@ Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
 
 ### Pin Map
 
-| Pin | Function |
-|-----|----------|
-| 1–11 | Gear 패널 스위치 |
-| 12, 13 | Alt Gear Handle / Reset |
-| 14–17 | CMDS 패널 스위치 |
-| 18 (SDA), 19 (SCL) | I2C — MCP23017 |
-| 20–23 | CMDS 패널 스위치 |
-| 24 (A10) | TWA 저항 래더 (4 버튼) |
-| 25 (A11) | CMDS MODE 저항 래더 (6 버튼) |
-| 26 (A12) | CMDS PRGM 저항 래더 (5 버튼) |
-| 28, 29 | Landing Gear 스위치 |
-| 30–33 | Gear LED (Nose, Left, Right, Warning) |
-| 34–37 | TWA LED (Power, Low, Search, Act) |
-| 40 (A16), 41 (A17) | Pedal (Left, Right Brake) |
-
-미사용 핀: 0, 27(A13), 38(A14), 39(A15)
+상세 핀 배치는 [docs/teensy_direct_pins.txt](docs/teensy_direct_pins.txt) 참조.
 
 ## Build
 
@@ -161,9 +150,11 @@ REDKITE_F16_PANELS/
 | Left Stand (new) | [![Left Stand new](3d%20stl/Left%20Stand%20-%20new.png)](3d%20stl/Left%20Stand%20-%20new.stl) |
 | Right Stand | [![Right Stand](3d%20stl/Right%20Stand.png)](3d%20stl/Right%20Stand.stl) |
 | Right Stand (new) | [![Right Stand new](3d%20stl/Right%20Stand-%20new.png)](3d%20stl/Right%20Stand-%20new.stl) |
-| Left Enclosure | [![Left Enclosure](3d%20stl/Left%20Enclosure.png)](3d%20stl/Left%20Enclosure.stl) |
-| Right Enclosure (new) | [![Right Enclosure new](3d%20stl/Right%20Enclosure%20-%20new.png)](3d%20stl/Right%20Enclosure%20-%20new.stl) |
+| Left Enclosure | ![Left Enclosure](3d%20stl/Left%20Enclosure.png) |
+| Right Enclosure (new) | ![Right Enclosure new](3d%20stl/Right%20Enclosure%20-%20new.png) |
 | Enclosure OnePiece | [![Enclosure OnePiece](3d%20stl/Enclosure%20-%20%20OnePiece2.png)](3d%20stl/Enclosure%20-%20%20OnePiece2.stl) |
+
+> **Note:** Left Enclosure, Right Enclosure의 STL 파일은 Cults3D에서 구매한 모델을 수정하여 제작한 것이므로 저작권 보호를 위해 재배포하지 않습니다. 미리보기 이미지만 참고용으로 포함되어 있습니다.
 
 ### 3D Part Sources
 
