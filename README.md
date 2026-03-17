@@ -143,6 +143,10 @@ REDKITE_F16_PANELS/
 └── backup/                    # 이전 버전 아카이브
 ```
 
+## Panel Sources
+
+패널은 PC Flights, HispaPanel, TEK Creations 등의 콕핏 빌더 전문 업체에서 구매할 수 있습니다.
+
 ## 3D Printed Parts
 
 `3d stl/` 폴더에 콕핏 패널 인클로저 및 스탠드의 3D 프린트용 STL 파일이 포함되어 있습니다.
