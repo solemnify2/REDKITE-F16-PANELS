@@ -145,7 +145,11 @@ REDKITE_F16_PANELS/
 
 ## Panel Sources
 
-패널은 PC Flights, HispaPanel, TEK Creations 등의 콕핏 빌더 전문 업체에서 구매할 수 있습니다.
+패널은 아래 콕핏 빌더 전문 업체에서 구매할 수 있습니다.
+
+- [PC Flights](https://pcflights.com/flight-simulator-cockpit-panels/f-16c-viper-home-cockpit-panels/) — F-16C 패널 전문, 미국/해외 배송
+- [HispaPanel](https://hispapanels.com/tienda/en/20-f-16-fighting-falcon) — 레이저 커팅/각인 패널 키트, 커스텀 제작 가능
+- [TEK Creations](https://tekcreations.space/shop/) — LED 백라이트 패널, DCS-BIOS 레디, [Etsy](https://www.etsy.com/shop/TekCreations)에서도 구매 가능
 
 ## 3D Printed Parts
 
@@ -160,6 +164,14 @@ REDKITE_F16_PANELS/
 | Left Enclosure | [![Left Enclosure](3d%20stl/Left%20Enclosure.png)](3d%20stl/Left%20Enclosure.stl) |
 | Right Enclosure (new) | [![Right Enclosure new](3d%20stl/Right%20Enclosure%20-%20new.png)](3d%20stl/Right%20Enclosure%20-%20new.stl) |
 | Enclosure OnePiece | [![Enclosure OnePiece](3d%20stl/Enclosure%20-%20%20OnePiece2.png)](3d%20stl/Enclosure%20-%20%20OnePiece2.stl) |
+
+### 3D Part Sources
+
+3D 프린트 파트는 [Cults3D](https://cults3d.com)에서 구할 수 있습니다.
+
+- [Greenisland](https://cults3d.com/en/users/Greenisland/3d-models) — F-16 콕핏 거의 전체 파트 판매
+- [Legarsdusofa](https://cults3d.com/en/design-collections/Legarsdusofa/f-16-cockpit-simulator) — F-16 콕핏 거의 전체 파트 판매
+- [The_Viper_Project](https://cults3d.com/en/users/The_Viper_Project/3d-models) — 버튼 노브, 스위치 캡, Dsub 캡 등 무료 제공
 
 ## License
 
