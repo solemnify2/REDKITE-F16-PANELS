@@ -149,13 +149,13 @@ REDKITE_F16_PANELS/
 
 | Part | Preview |
 |------|---------|
-| Left Stand | ![Left Stand](3d%20stl/Left%20Stand.png) |
-| Left Stand (new) | ![Left Stand new](3d%20stl/Left%20Stand%20-%20new.png) |
-| Right Stand | ![Right Stand](3d%20stl/Right%20Stand.png) |
-| Right Stand (new) | ![Right Stand new](3d%20stl/Right%20Stand-%20new.png) |
-| Left Enclosure | ![Left Enclosure](3d%20stl/Left%20Enclosure.png) |
-| Right Enclosure (new) | ![Right Enclosure new](3d%20stl/Right%20Enclosure%20-%20new.png) |
-| Enclosure OnePiece | ![Enclosure OnePiece](3d%20stl/Enclosure%20-%20%20OnePiece2.png) |
+| Left Stand | [![Left Stand](3d%20stl/Left%20Stand.png)](3d%20stl/Left%20Stand.stl) |
+| Left Stand (new) | [![Left Stand new](3d%20stl/Left%20Stand%20-%20new.png)](3d%20stl/Left%20Stand%20-%20new.stl) |
+| Right Stand | [![Right Stand](3d%20stl/Right%20Stand.png)](3d%20stl/Right%20Stand.stl) |
+| Right Stand (new) | [![Right Stand new](3d%20stl/Right%20Stand-%20new.png)](3d%20stl/Right%20Stand-%20new.stl) |
+| Left Enclosure | [![Left Enclosure](3d%20stl/Left%20Enclosure.png)](3d%20stl/Left%20Enclosure.stl) |
+| Right Enclosure (new) | [![Right Enclosure new](3d%20stl/Right%20Enclosure%20-%20new.png)](3d%20stl/Right%20Enclosure%20-%20new.stl) |
+| Enclosure OnePiece | [![Enclosure OnePiece](3d%20stl/Enclosure%20-%20%20OnePiece2.png)](3d%20stl/Enclosure%20-%20%20OnePiece2.stl) |
 
 ## License
 
