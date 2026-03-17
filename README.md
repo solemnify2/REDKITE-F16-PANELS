@@ -1,5 +1,7 @@
 # REDKITE F16 PANELS
 
+![My Cockpit](My%20Cockpit.png)
+
 Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
 **Falcon BMS**(BMS-BIOS)와 **DCS World**(DCS-BIOS) 듀얼 심 지원, 프로토콜 자동 감지.
 
@@ -130,8 +132,8 @@ REDKITE_F16_PANELS/
 │   └── BmsBiosParser.h        # BMS-BIOS 프로토콜 파서
 ├── tools/
 │   ├── bmsbios_bridge.py      # Falcon BMS 공유메모리 → Teensy 시리얼 브릿지
-│   ├── dcsbios_bridge.py      # DCS-BIOS UDP → Teensy 시리얼 브릿지
-│   └── dcsbios_test_recv.py   # DCS-BIOS UDP 수신 테스트
+│   └── dcsbios_bridge.py      # DCS-BIOS UDP → Teensy 시리얼 브릿지
+├── 3d stl/                    # 3D 프린트용 STL 파일
 ├── docs/
 │   ├── joystick.txt           # 조이스틱 버튼/LED 레이아웃
 │   ├── teensy_direct_pins.txt # Teensy 핀 배치표
@@ -140,6 +142,20 @@ REDKITE_F16_PANELS/
 │   └── resistor_ladder_wiring.html  # 저항 래더 배선도
 └── backup/                    # 이전 버전 아카이브
 ```
+
+## 3D Printed Parts
+
+`3d stl/` 폴더에 콕핏 패널 인클로저 및 스탠드의 3D 프린트용 STL 파일이 포함되어 있습니다.
+
+| Part | Preview |
+|------|---------|
+| Left Stand | ![Left Stand](3d%20stl/Left%20Stand.png) |
+| Left Stand (new) | ![Left Stand new](3d%20stl/Left%20Stand%20-%20new.png) |
+| Right Stand | ![Right Stand](3d%20stl/Right%20Stand.png) |
+| Right Stand (new) | ![Right Stand new](3d%20stl/Right%20Stand-%20new.png) |
+| Left Enclosure | ![Left Enclosure](3d%20stl/Left%20Enclosure.png) |
+| Right Enclosure (new) | ![Right Enclosure new](3d%20stl/Right%20Enclosure%20-%20new.png) |
+| Enclosure OnePiece | ![Enclosure OnePiece](3d%20stl/Enclosure%20-%20%20OnePiece2.png) |
 
 ## License
 
