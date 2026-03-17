@@ -4,7 +4,7 @@ DCS-BIOS UDP 멀티캐스트 데이터를 Teensy COM 포트로 전달합니다.
 
 사용법:
   python dcsbios_bridge.py          (COM 포트 자동 감지)
-  python dcsbios_bridge.py COM5     (COM 포트 지정)
+  python dcsbios_bridge.py COM4     (COM 포트 지정)
 
 필요 패키지:
   pip install pyserial
@@ -47,7 +47,7 @@ def main():
         com_port = find_teensy_port()
         if not com_port:
             print("COM 포트를 찾을 수 없습니다. 포트를 인자로 지정하세요.")
-            print("예: python dcsbios_bridge.py COM5")
+            print("예: python dcsbios_bridge.py COM4")
             sys.exit(1)
 
     # 시리얼 포트 열기

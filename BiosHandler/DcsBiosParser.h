@@ -28,6 +28,9 @@
 #define DCSBIOS_GEAR_R_ADDR     0x447C
 #define DCSBIOS_GEAR_RIGHT_MASK 0x0001  // bit 0
 
+// Address 0x447C: Right gear (bit0), Gear Warning (bit1)
+#define DCSBIOS_GEAR_WARN_MASK  0x0002  // bit 1 — LIGHT_GEAR_WARN (red)
+
 // Address 0x447E: RWR/TWA indicator lights
 #define DCSBIOS_TWA_ADDR          0x447E
 #define DCSBIOS_TWA_SEARCH_MASK   0x0400  // bit 10 — LIGHT_RWR_SEARCH
@@ -94,6 +97,7 @@ static void dcsBiosOnUpdate(uint16_t addr, uint16_t value) {
   }
   else if (addr == DCSBIOS_GEAR_R_ADDR) {
     writeLed(LI_RIGHT_GEAR, (value & DCSBIOS_GEAR_RIGHT_MASK));
+    writeLed(LI_GEAR_WARN, (value & DCSBIOS_GEAR_WARN_MASK));
   }
   else if (addr == DCSBIOS_TWA_ADDR) {
     writeLed(LI_TWA_POWER, (value & DCSBIOS_TWA_POWER_MASK));

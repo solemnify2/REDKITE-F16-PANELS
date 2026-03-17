@@ -40,11 +40,12 @@ enum Panel {
   PNL_ALT_GEAR,   // Alt Gear panel (left aux console)
   PNL_CMDS,       // Countermeasures Dispenser (left aux console)
   PNL_TWA,        // Threat Warning Aux (left aux console)
+  PNL_HMCS,       // HMCS (Helmet Mounted Cueing System)
   PNL_COUNT
 };
 
 const char* const panelNames[] = {
-  "Standalone", "MISC", "Gear", "AltGear", "CMDS", "TWA"
+  "Standalone", "MISC", "Gear", "AltGear", "CMDS", "TWA", "HMCS"
 };
 
 struct SwitchDef {
@@ -55,15 +56,6 @@ struct SwitchDef {
   uint8_t     pin1;
   uint8_t     pin2;       // only used for SW_ON_OFF_ON
   int*        stateRef;   // if non-NULL, switch state is written here
-};
-
-struct RotaryDef {
-  const char*    name;
-  Panel          panel;
-  int8_t         mcpIdx;     // -1 = direct Teensy pin, >= 0 = index into mcpDevices[]
-  uint8_t        numPos;     // number of positions mapped to joystick buttons
-  uint8_t        numPins;    // number of physical pins (>= numPos)
-  const uint8_t* pins;
 };
 
 // NOTE: PotDef and AnalogBtnArrayDef have no mcpIdx — MCP23017 does not support analog input.
@@ -151,13 +143,13 @@ const SwitchDef switches[] = {
   {"CMDS JETT",             PNL_CMDS,       SW_ON_OFF,      -1,  14,   0,  NULL},
 
   // ---- Alt Gear Panel (left aux console) ----
-  {"ALT GEAR Handle",       PNL_ALT_GEAR,   SW_ON_OFF,      -1,  33,   0,  NULL},
-  // {"ALT GEAR Reset",        PNL_ALT_GEAR,   SW_ON_OFF,      -1,  15,   0,  NULL},
+  {"ALT GEAR Handle",       PNL_ALT_GEAR,   SW_ON_OFF,      -1,  12,   0,  NULL},
+  {"ALT GEAR Reset",        PNL_ALT_GEAR,   SW_ON_OFF,      -1,  13,   0,  NULL},
+
+  // ---- HMCS Panel ----
+  {"HMCS Eject",            PNL_HMCS,       SW_ON_OFF,      -1,   0,   0,  NULL},
 
 };
-
-#define NUM_ROTARIES 0
-const RotaryDef* const rotaries = nullptr;
 
 // --- Analog Button Arrays (resistor ladder, multiple buttons on 1 analog pin) ---
 // Each button adds 220Ω in series → unique analogRead value per button.
@@ -170,8 +162,8 @@ const RotaryDef* const rotaries = nullptr;
 const char* const twaBtnNames[] = {"TWA SEARCH","TWA ACT/PWR","TWA ALT","TWA SYS PWR"};
 const int         twaBtnValues[] = {839, 710, 615, 543};
 
-const char* const cmdsModeBtnNames[] = {"MODE 1","MODE 2","MODE 3","MODE 4","MODE 5","MODE 6","MODE 7","MODE 8"};
-const int         cmdsModeBtnValues[] = {843, 718, 624, 553, 496, 449, 411, 379};
+const char* const cmdsModeBtnNames[] = {"MODE 1","MODE 2","MODE 3","MODE 4","MODE 5","MODE 6"};
+const int         cmdsModeBtnValues[] = {843, 718, 624, 553, 496, 449};
 
 const char* const cmdsPrgmBtnNames[] = {"PRGM BIT","PRGM 1","PRGM 2","PRGM 3","PRGM 4"};
 const int         cmdsPrgmBtnValues[] = {843, 718, 624, 553, 496};
@@ -179,7 +171,7 @@ const int         cmdsPrgmBtnValues[] = {843, 718, 624, 553, 496};
 const AnalogBtnArrayDef analogBtnArrays[] = {
   // groupName       panel     pin  numBtn  btnNames           values              tolerance
   {"TWA Buttons",    PNL_TWA,  A10, 4,      twaBtnNames,       twaBtnValues,      30},
-  {"CMDS MODE",      PNL_CMDS, A11, 8,      cmdsModeBtnNames,  cmdsModeBtnValues, 15},
+  {"CMDS MODE",      PNL_CMDS, A11, 6,      cmdsModeBtnNames,  cmdsModeBtnValues, 15},
   {"CMDS PRGM",      PNL_CMDS, A12, 5,      cmdsPrgmBtnNames,  cmdsPrgmBtnValues, 25},
 };
 
@@ -188,12 +180,15 @@ const AnalogBtnArrayDef analogBtnArrays[] = {
 
 // --- Analog Pots ---
 const PotDef pots[] = {
-  // name      panel     pin   axis
+  // name              panel       pin   axis
+  {"HMCS Brightness",  PNL_HMCS,   A13,  AXIS_X},
+  {"HMCS Contrast",    PNL_HMCS,   A14,  AXIS_Y},
+  {"HMCS Symbology",   PNL_HMCS,   A15,  AXIS_Z},
 };
 
 // --- LEDs ---
 enum LedIdx {
-  LI_NOSE_GEAR, LI_LEFT_GEAR, LI_RIGHT_GEAR,
+  LI_NOSE_GEAR, LI_LEFT_GEAR, LI_RIGHT_GEAR, LI_GEAR_WARN,
   LI_TWA_POWER, LI_TWA_LOW, LI_TWA_SEARCH, LI_TWA_ACT,
   LI_ECM,
 };
@@ -205,6 +200,7 @@ const LedDef leds[] = {
   {"Nose Gear",    PNL_GEAR,  30,  -1},
   {"Left Gear",    PNL_GEAR,  31,  -1},
   {"Right Gear",   PNL_GEAR,  32,  -1},
+  {"Gear Warn",    PNL_GEAR,  33,  -1},
   {"TWA Power",    PNL_TWA,   34,  -1},
   {"TWA Low",      PNL_TWA,   35,  -1},
   {"TWA Search",   PNL_TWA,   36,  -1},
@@ -251,7 +247,6 @@ const McpDeviceDef mcpDevices[] = {
 
 #define NUM_SWITCHES      (sizeof(switches)      / sizeof(switches[0]))
 #define NUM_MCP_DEVICES   (sizeof(mcpDevices)    / sizeof(mcpDevices[0]))
-// NUM_ROTARIES defined above (0 — all rotaries converted to resistor ladders)
 #define NUM_POTS          (sizeof(pots)          / sizeof(pots[0]))
 #define NUM_LEDS          (sizeof(leds)          / sizeof(leds[0]))
 
@@ -374,7 +369,8 @@ void writeLed(uint8_t idx, bool state) {
   }
 }
 
-#include "DcsBios/DcsBiosParser.h"
+#include "BiosHandler/DcsBiosParser.h"
+#include "BiosHandler/BmsBiosParser.h"
 
 // ================================================================
 //  Protocol Auto-Detection
@@ -390,70 +386,11 @@ static int       onlineBlinkRemain = 0;      // remaining ON/OFF toggles for TWA
 static int       onlineBlinkTimer  = 0;      // tick counter for 0.5s interval
 
 // ================================================================
-//  BMS-BIOS Protocol Handler
-// ================================================================
-//
-// Binary protocol from BMS Bridge:
-//   Sync:     0xAA 0xBB          (2 bytes)
-//   ledBits:  uint32 LE          (bits 0–16 for leds[])
-//   checksum: XOR of 4 payload bytes
-//   Total: 7 bytes per frame
-
-#define BB_FRAME_PAYLOAD  4   // 4 (ledBits)
-
-enum BmsBiosState { BB_SYNC_AA, BB_SYNC_BB, BB_PAYLOAD, BB_CHECKSUM };
-
-static BmsBiosState bbState = BB_SYNC_AA;
-static uint8_t      bbBuf[BB_FRAME_PAYLOAD];
-static uint8_t      bbBufIdx = 0;
-
-void bmsBiosReset() {
-  bbState  = BB_SYNC_AA;
-  bbBufIdx = 0;
-}
-
-void bmsBiosApply() {
-  uint32_t ledBits = bbBuf[0] | ((uint32_t)bbBuf[1] << 8) |
-                     ((uint32_t)bbBuf[2] << 16) | ((uint32_t)bbBuf[3] << 24);
-
-  for (unsigned int i = 0; i < NUM_LEDS; i++) {
-    writeLed(i, (ledBits >> i) & 1);
-  }
-}
-
-void processBmsBiosByte(uint8_t b) {
-  switch (bbState) {
-    case BB_SYNC_AA:
-      if (b == 0xAA) bbState = BB_SYNC_BB;
-      break;
-
-    case BB_SYNC_BB:
-      if (b == 0xBB) { bbBufIdx = 0; bbState = BB_PAYLOAD; }
-      else            bbState = BB_SYNC_AA;
-      break;
-
-    case BB_PAYLOAD:
-      bbBuf[bbBufIdx++] = b;
-      if (bbBufIdx >= BB_FRAME_PAYLOAD) bbState = BB_CHECKSUM;
-      break;
-
-    case BB_CHECKSUM: {
-      uint8_t xor_check = 0;
-      for (uint8_t i = 0; i < BB_FRAME_PAYLOAD; i++) xor_check ^= bbBuf[i];
-      if (xor_check == b) bmsBiosApply();
-      bbState = BB_SYNC_AA;
-      break;
-    }
-  }
-}
-
-// ================================================================
 //  Global State
 // ================================================================
 
 // Runtime button mapping (auto-assigned in setup)
 static uint8_t switchBtnStart[NUM_SWITCHES];
-static uint8_t rotaryBtnStart[NUM_ROTARIES > 0 ? NUM_ROTARIES : 1];
 static uint8_t analogBtnStart[NUM_ANALOG_ARRAYS];
 static int     totalButtons = 0;
 
@@ -476,11 +413,6 @@ void assignButtons() {
   for (unsigned int i = 0; i < NUM_SWITCHES; i++) {
     switchBtnStart[i] = btn;
     btn += switchButtonCount(switches[i].type);
-  }
-
-  for (unsigned int i = 0; i < NUM_ROTARIES; i++) {
-    rotaryBtnStart[i] = btn;
-    btn += rotaries[i].numPos;
   }
 
   for (unsigned int i = 0; i < NUM_ANALOG_ARRAYS; i++) {
@@ -581,24 +513,6 @@ void processSwitches() {
         if (sw.stateRef) *sw.stateRef = -(!s1) + (!s2);   // -1 = dn, 0 = center, 1 = up
         break;
       }
-    }
-  }
-}
-
-// ================================================================
-//  Rotary Processing
-// ================================================================
-
-void processRotaries() {
-  for (unsigned int r = 0; r < NUM_ROTARIES; r++) {
-    int btn = rotaryBtnStart[r];
-
-    const RotaryDef& rot = rotaries[r];
-    for (int i = 0; i < rot.numPos; i++) {
-      bool pinState = (rot.mcpIdx >= 0)
-        ? mcpReadPin(rot.mcpIdx, rot.pins[i])
-        : digitalRead(rot.pins[i]);
-      Joystick.button(btn + i, !pinState);
     }
   }
 }
@@ -812,13 +726,6 @@ void setup() {
       pinMode(switches[i].pin2, INPUT_PULLUP);
   }
 
-  // Configure rotary pins (direct only; MCP rotaries are configured by mcpInit)
-  for (unsigned int i = 0; i < NUM_ROTARIES; i++) {
-    if (rotaries[i].mcpIdx >= 0) continue;
-    for (int j = 0; j < rotaries[i].numPins; j++)
-      pinMode(rotaries[i].pins[j], INPUT_PULLUP);
-  }
-
   // Configure analog button array pins
   for (unsigned int i = 0; i < NUM_ANALOG_ARRAYS; i++) {
     pinMode(analogBtnArrays[i].pin, INPUT);
@@ -853,15 +760,14 @@ void setup() {
   // Print configuration summary
   Serial.println("=== REDKITE_F16_PANELS ===");
   for (int p = 0; p < PNL_COUNT; p++) {
-    int nSw = 0, nRot = 0, nPot = 0, nLed = 0, nAna = 0;
+    int nSw = 0, nPot = 0, nLed = 0, nAna = 0;
     for (unsigned int i = 0; i < NUM_SWITCHES;      i++) if (switches[i].panel        == p) nSw++;
-    for (unsigned int i = 0; i < NUM_ROTARIES;      i++) if (rotaries[i].panel        == p) nRot++;
     for (unsigned int i = 0; i < NUM_ANALOG_ARRAYS; i++) if (analogBtnArrays[i].panel == p) nAna++;
     for (unsigned int i = 0; i < NUM_POTS;          i++) if (pots[i].panel            == p) nPot++;
     for (unsigned int i = 0; i < NUM_LEDS;          i++) if (leds[i].panel            == p) nLed++;
-    if (nSw + nRot + nAna + nPot + nLed == 0) continue;
-    Serial.printf("  [%s] sw:%d rot:%d ana:%d pot:%d led:%d\n",
-      panelNames[p], nSw, nRot, nAna, nPot, nLed);
+    if (nSw + nAna + nPot + nLed == 0) continue;
+    Serial.printf("  [%s] sw:%d ana:%d pot:%d led:%d\n",
+      panelNames[p], nSw, nAna, nPot, nLed);
   }
   Serial.printf("  Total buttons: %d\n", totalButtons);
   Serial.println("=========================");
@@ -880,10 +786,6 @@ void setup() {
       else
         Serial.printf("  btn %d~%d   : %s\n", switchBtnStart[i], switchBtnStart[i] + cnt - 1, switches[i].name);
     }
-  }
-  for (unsigned int i = 0; i < NUM_ROTARIES; i++) {
-    Serial.printf("  btn %d~%d   : %s (%d-pos)\n",
-      rotaryBtnStart[i], rotaryBtnStart[i] + rotaries[i].numPos - 1, rotaries[i].name, rotaries[i].numPos);
   }
   for (unsigned int i = 0; i < NUM_ANALOG_ARRAYS; i++) {
     Serial.printf("  btn %d~%d   : %s (%d-btn analog ladder)\n",
@@ -906,7 +808,6 @@ void loop() {
 
   // --- Read all inputs ---
   processSwitches();
-  processRotaries();
   processAnalogButtons();
   processPots();
   processPedal();

@@ -12,8 +12,8 @@ Protocol (BMS-BIOS):
   Total: 7 bytes per frame
 
 Usage:
-  python bms_bridge.py COM5
-  python bms_bridge.py COM5 --hz 20
+  python bms_bridge.py COM4
+  python bms_bridge.py COM4 --hz 20
 """
 
 import sys
@@ -36,6 +36,7 @@ OFF_LIGHTBITS2 = 124   # unsigned int (after headPitch/Roll/Yaw)
 OFF_LIGHTBITS3 = 128   # unsigned int
 
 # --- LightBits (offset 108) ---
+LB_GEARHANDLE       = 0x40000000  # bit 30 — gear handle lamp (fault or gear in motion)
 LB_ECM              = 0x04000000  # bit 26
 
 # --- LightBits2 (offset 240) ---
@@ -56,17 +57,19 @@ LB3_RIGHT_GEAR_DN   = 0x00040000  # bit 18
 LI_NOSE_GEAR        = 0
 LI_LEFT_GEAR        = 1
 LI_RIGHT_GEAR       = 2
-LI_TWA_POWER        = 3
-LI_TWA_LOW          = 4
-LI_TWA_SEARCH       = 5
-LI_TWA_ACT          = 6
-LI_ECM              = 7
+LI_GEAR_WARN        = 3
+LI_TWA_POWER        = 4
+LI_TWA_LOW          = 5
+LI_TWA_SEARCH       = 6
+LI_TWA_ACT          = 7
+LI_ECM              = 8
 
 # LED mapping table: (LedIdx, lightBits_offset, mask)
 LED_MAP = [
     (LI_NOSE_GEAR,         OFF_LIGHTBITS3, LB3_NOSE_GEAR_DN),
     (LI_LEFT_GEAR,         OFF_LIGHTBITS3, LB3_LEFT_GEAR_DN),
     (LI_RIGHT_GEAR,        OFF_LIGHTBITS3, LB3_RIGHT_GEAR_DN),
+    (LI_GEAR_WARN,         OFF_LIGHTBITS,  LB_GEARHANDLE),
     (LI_TWA_POWER,         OFF_LIGHTBITS2, LB2_AUX_PWR),
     (LI_TWA_LOW,           OFF_LIGHTBITS2, LB2_AUX_LOW),
     (LI_TWA_SEARCH,        OFF_LIGHTBITS2, LB2_AUX_SRCH),
@@ -136,7 +139,7 @@ def read_led_states(shm):
 
 def main():
     parser = argparse.ArgumentParser(description='BMS-BIOS Bridge')
-    parser.add_argument('port', help='Serial port (e.g., COM5)')
+    parser.add_argument('port', help='Serial port (e.g., COM4)')
     parser.add_argument('--baud', type=int, default=1000000, help='Baud rate (default: 1000000)')
     parser.add_argument('--hz', type=int, default=20, help='Update rate in Hz (default: 20)')
     parser.add_argument('--debug', action='store_true', help='Print raw shared memory values')

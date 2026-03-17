@@ -1,0 +1,100 @@
+Joystick Button Layout
+======================
+
+Buttons are auto-assigned in order: switches[] -> analogBtnArrays[]
+
+
+Switches (btn 1~35)
+--------------------
+
+Btn     Panel       Name                Type
+---     -----       ----                ----
+1       MISC        Laser ARM           ON/OFF
+2~3     MISC        RF                  ON/OFF/ON
+4~5     MISC        Master ARM          ON/OFF/ON
+6~7     MISC        Pitch AP            ON/OFF/ON
+8~9     MISC        Roll AP             ON/OFF/ON
+10      MISC        ALT REL             ON/OFF
+11      MISC        ADV MODE            ON/OFF
+12      Gear        EMER Jettison       ON/OFF
+13      Gear        Store CAT           ON/OFF
+14      Gear        Horn Silencer       ON/OFF
+15~16   Gear        Landing Light       ON/OFF/ON
+17      Gear        Hook                ON/OFF
+18~19   Gear        Landing Gear        ON/OFF/ON
+20      Gear        DN LOCK REL         ON/OFF
+21      Gear        GND JETT ENABLE     ON/OFF
+22~23   Gear        ANTI SKID           ON/OFF/ON
+24      Gear        BRAKES Channel      ON/OFF
+25      CMDS        CMDS RWR            ON/OFF
+26      CMDS        CMDS JMR            ON/OFF
+27      CMDS        CMDS MWS            ON/OFF
+28      CMDS        CMDS O1             ON/OFF
+29      CMDS        CMDS O2             ON/OFF
+30      CMDS        CMDS CH             ON/OFF
+31      CMDS        CMDS FL             ON/OFF
+32      CMDS        CMDS JETT           ON/OFF
+33      Alt Gear    ALT GEAR Handle     ON/OFF
+34      Alt Gear    ALT GEAR Reset      ON/OFF
+35      HMCS        HMCS Eject          ON/OFF
+
+
+Analog Buttons (btn 36~50)
+--------------------------
+
+Btn     Panel       Name
+---     -----       ----
+36      TWA         TWA SEARCH
+37      TWA         TWA ACT/PWR
+38      TWA         TWA ALT
+39      TWA         TWA SYS PWR
+40      CMDS        MODE 1
+41      CMDS        MODE 2
+42      CMDS        MODE 3
+43      CMDS        MODE 4
+44      CMDS        MODE 5
+45      CMDS        MODE 6
+46      CMDS        PRGM BIT
+47      CMDS        PRGM 1
+48      CMDS        PRGM 2
+49      CMDS        PRGM 3
+50      CMDS        PRGM 4
+
+
+Axes (6)
+--------
+
+Axis    Panel       Name                Pin
+----    -----       ----                ---
+X       HMCS        HMCS Brightness     A13
+Y       HMCS        HMCS Contrast       A14
+Z       HMCS        HMCS Symbology      A15
+Zr      Pedal       Rudder              (synthesized)
+Xr/SL   Pedal       Left Brake          A16
+Yr/SR   Pedal       Right Brake         A17
+
+
+LEDs (9)
+--------
+
+Idx   Name          Pin         Protocol (DCS / BMS)
+---   -----------   ---------   --------------------
+0     Nose Gear     30          0x447A bit14 / LB3 NoseGearDown
+1     Left Gear     31          0x447A bit15 / LB3 LeftGearDown
+2     Right Gear    32          0x447C bit0  / LB3 RightGearDown
+3     Gear Warn     33          0x447C bit1  / LB  GEARHANDLE
+4     TWA Power     34          0x447E bit12 / LB2 AuxPwr
+5     TWA Low       35          0x447E bit13 / LB2 AuxLow
+6     TWA Search    36          0x447E bit10 / LB2 AuxSrch
+7     TWA Act       37          0x447E bit11 / LB2 AuxAct
+8     ECM           MCP0:11     0x4544 bit14 / LB  ECM
+
+
+Summary
+-------
+
+Total buttons:      50
+  Switches:         35  (ON/OFF 23, ON/OFF/ON 6x2)
+  Analog ladder:    15  (TWA 4 + MODE 6 + PRGM 5)
+LEDs:                9  (direct 8 + MCP 1)
+Axes:                6  (HMCS pot 3 + Pedal rudder/brake 3)
