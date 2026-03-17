@@ -79,13 +79,13 @@ Stand는 각각 Left/Right Enclosure 뒷면에 부착하는 지지대입니다. 
 
 | Part | Preview |
 |------|---------|
-| Left Stand | [![Left Stand](3d%20stl/Left%20Stand.png)](3d%20stl/Left%20Stand.stl) |
-| Left Stand (new) | [![Left Stand new](3d%20stl/Left%20Stand%20-%20new.png)](3d%20stl/Left%20Stand%20-%20new.stl) |
-| Right Stand | [![Right Stand](3d%20stl/Right%20Stand.png)](3d%20stl/Right%20Stand.stl) |
-| Right Stand (new) | [![Right Stand new](3d%20stl/Right%20Stand-%20new.png)](3d%20stl/Right%20Stand-%20new.stl) |
-| Left Enclosure | ![Left Enclosure](3d%20stl/Left%20Enclosure.png) |
-| Right Enclosure (new) | ![Right Enclosure new](3d%20stl/Right%20Enclosure%20-%20new.png) |
-| Enclosure OnePiece | [![Enclosure OnePiece](3d%20stl/Enclosure%20-%20%20OnePiece2.png)](3d%20stl/Enclosure%20-%20%20OnePiece2.stl) |
+| Left Stand | <a href="3d%20stl/Left%20Stand.stl"><img src="3d%20stl/Left%20Stand.png" width="150"></a> |
+| Left Stand (new) | <a href="3d%20stl/Left%20Stand%20-%20new.stl"><img src="3d%20stl/Left%20Stand%20-%20new.png" width="150"></a> |
+| Right Stand | <a href="3d%20stl/Right%20Stand.stl"><img src="3d%20stl/Right%20Stand.png" width="150"></a> |
+| Right Stand (new) | <a href="3d%20stl/Right%20Stand-%20new.stl"><img src="3d%20stl/Right%20Stand-%20new.png" width="150"></a> |
+| Left Enclosure | <img src="3d%20stl/Left%20Enclosure.png" width="150"> |
+| Right Enclosure (new) | <img src="3d%20stl/Right%20Enclosure%20-%20new.png" width="150"> |
+| Enclosure OnePiece | <a href="3d%20stl/Enclosure%20-%20%20OnePiece2.stl"><img src="3d%20stl/Enclosure%20-%20%20OnePiece2.png" width="150"></a> |
 
 > **Note:** Left Enclosure, Right Enclosure의 STL 파일은 Cults3D에서 구매한 모델을 수정하여 제작한 것이므로 저작권 보호를 위해 재배포하지 않습니다. 미리보기 이미지만 참고용으로 포함되어 있습니다.
 
