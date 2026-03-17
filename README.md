@@ -7,20 +7,17 @@ Teensy 4.1 기반 F-16 콕핏 패널 컨트롤러.
 
 ## Design Goals
 
-VR 전용 미니멀 콕핏을 지향합니다. VR 헤드셋을 착용한 상태에서 손을 뻗은 위치에 물리 스위치가 있도록 실기 1:1 스케일로 제작했습니다. 사용하지 않을 때 쉽게 치울 수 있는 이동식/수납식 구조이며, 인게임에서 시현되는 계기류(디스플레이, 게이지 등)는 되도록 포함하지 않고 스위치와 LED 위주로 구성했습니다. 예를 들어 DED, RWR 등은 VR 내에서 충분히 읽을 수 있으므로 별도 하드웨어를 제작하지 않았습니다. 단, MFD는 예외로 물리 LCD를 장착했는데, VR passthrough 시 손이 인게임 디스플레이를 가리기 때문입니다. MFD용 square LCD는 Alibaba에서 구매한 [GX076-30MB](https://www.alibaba.com/product-detail/7-6-Inch-Square-LCD-Display_1601257654342.html) 모델입니다.
+VR 전용 미니멀 데스크핏을 지향합니다. VR 헤드셋을 쓰고 손을 뻗은 곳에 스위치가 있었으면 하는 생각을 1년 이상 참다가 결국 만들었습니다 ㅠㅠ 실기 1:1 스케일로 제작했습니다. 사용하지 않을 때 쉽게 치울 수 있는 이동식/수납식 구조이며, 인게임 디스플레이로 충분한 계기류(DED, RWR, 엔진 게이지, HSI 등)는 별도 하드웨어를 제작하지 않고 스위치와 LED 위주로 구성했습니다.
 
 ## Features
 
-- **USB Joystick + Keyboard** 복합 디바이스 (Windows 자동 인식)
-- **데이터 드리븐 설계** — 스위치/LED 등 하드웨어 변경 시 config 배열만 수정
-- **조이스틱 버튼 자동 할당** — 런타임에 순차 번호 부여, 수동 매핑 불필요
-- **MCP23017 I2C 확장** — I/O 핀 부족 시 I2C로 확장 가능
-- **저항 래더 입력** — 아날로그 핀 1개로 다중 버튼 인식 (로터리 스위치 대체)
+- **Left Aux Panels 위주로 제작** — I2C(MCP23017)를 이용하여 새로운 패널을 여러 개 추가 가능
+- **MCP23017 I2C 확장** — MISC 패널은 MCP23017으로 제작하여 Left Aux Panels의 slave 장치로 동작
 - **페달 처리** — 러더 + 독립 브레이크 합성, 자동 캘리브레이션
 - **USB Suspend 감지** — PC 절전 시 LED 소등 및 MCU 저전력 모드 진입
 - **프로토콜 자동 감지** — BMS-BIOS(바이너리) / DCS-BIOS(바이너리) 자동 판별
 
-## Supported Panels
+## Supported Panels and Input
 
 | Panel | Type | Description |
 |-------|------|-------------|
@@ -102,26 +99,36 @@ Stand는 각각 Left/Right Enclosure 뒷면에 부착하는 지지대입니다. 
 1. [Teensyduino](https://www.pjrc.com/teensy/td_download.html) 설치
 2. Arduino IDE에서:
    - **Board**: Teensy 4.1
-   - **USB Type**: Keyboard + Mouse + Joystick
+   - **USB Type**: Serial + Keyboard + Mouse + Joystick (복합 디바이스, Windows 자동 인식)
+
+### 128 Button Joystick 설정
+
+기본 Joystick은 32버튼까지만 지원합니다. 현재 50버튼을 사용하며, I2C로 패널을 추가하면 더 늘어나므로 128버튼 모드가 필요합니다.
+
+`%LOCALAPPDATA%\Arduino15\packages\teensy\hardware\avr\<version>\cores\teensy4\usb_desc.h`에서 해당 USB Type의 `JOYSTICK_SIZE`를 `12`에서 `64`로 변경:
+
+```c
+#define JOYSTICK_SIZE         64    //  12 = normal, 64 = extreme joystick
+```
 3. 필요 라이브러리:
    - `Wire` (built-in)
    - `Keyboard` (built-in)
 
-### Pin Map
+### 스위치류와 Teensy 핀 연결
 
 상세 핀 배치는 [docs/teensy_direct_pins.txt](docs/teensy_direct_pins.txt) 참조.
 
 ### Joystick Button Layout
 
-조이스틱 버튼/축/LED 배치는 [docs/joystick.txt](docs/joystick.txt) 참조.
+조이스틱 버튼은 런타임에 순차 번호가 자동 부여되지만, 인게임 내의 키 매핑은 직접 해주셔야 합니다. 현재 배치는 [docs/joystick.txt](docs/joystick.txt) 참조.
 
 ### Upload
 
-`REDKITE_F16_PANELS.ino`를 열고 Upload.
+Arduino IDE에서 `REDKITE_F16_PANELS.ino`를 열고 Upload.
 
 ## Customization
 
-하드웨어 변경은 `REDKITE_F16_PANELS.ino`의 **HARDWARE CONFIGURATION** 섹션만 수정합니다.
+스위치/LED 등 하드웨어 변경 시 `REDKITE_F16_PANELS.ino`의 **HARDWARE CONFIGURATION** 섹션의 config 배열만 수정하면 됩니다. 패널을 비활성화하려면 해당 항목을 주석 처리하면 됩니다.
 
 ```cpp
 // 스위치 추가 예시
@@ -137,15 +144,9 @@ const AnalogBtnArrayDef analogBtnArrays[] = {
 };
 ```
 
-패널을 비활성화하려면 해당 항목을 주석 처리하면 됩니다.
-
 ## DCS-BIOS / BMS-BIOS Protocol Support
 
 스위치/버튼 입력은 USB Joystick으로 직접 전달되지만, LED 상태는 시뮬레이터에서 받아와야 합니다. Python 브릿지가 시뮬레이터의 내부 데이터를 읽어 시리얼로 Teensy에 전송하고, Teensy는 수신된 프로토콜(BMS-BIOS / DCS-BIOS)을 자동 감지하여 LED를 제어합니다.
-
-### Why not F4ToSerial?
-
-이전 버전에서는 Falcon BMS용 프로토콜로 [F4ToSerial](https://github.com/Music-Junky/F4ToSerial)을 사용했으나, F4TS는 Teensy의 다이렉트 핀만 지정 가능하고 MCP23017 등 I2C 확장 핀을 지원하지 않는 문제가 있어 BMS-BIOS로 대체했습니다. 부수적으로 JSON 파싱 오버헤드 제거, ArduinoJson 의존성 제거 등 소소한 이점도 기대할 수 있습니다 (체감 차이는 미지수). DCS-BIOS/BMS-BIOS 프로토콜을 직접 구현했으므로 향후 DCS나 BMS 업데이트로 주소/오프셋이 변경되면 직접 수정이 필요하지만, 소스가 명확하고(`docs/protocol_reference.txt` 참조) 수정 범위도 작아 큰 부담은 아닙니다. 게다가 [Claude Code](https://claude.com/claude-code)도 있으니 든든합니다.
 
 ### Falcon BMS (BMS-BIOS)
 
@@ -158,6 +159,8 @@ const AnalogBtnArrayDef analogBtnArrays[] = {
   python tools/bmsbios_bridge.py COM4
   python tools/bmsbios_bridge.py COM4 --hz 20 --debug
   ```
+
+> **참고 — Why not F4ToSerial?** 이전 버전에서는 [F4ToSerial](https://github.com/Music-Junky/F4ToSerial)을 사용했으나, F4TS는 Teensy의 다이렉트 핀만 지정 가능하고 MCP23017 등 I2C 확장 핀을 지원하지 않는 문제가 있어 BMS-BIOS로 대체했습니다. 부수적으로 JSON 파싱 오버헤드 제거, ArduinoJson 의존성 제거 등 소소한 이점도 기대할 수 있습니다 (체감 차이는 미지수). DCS-BIOS/BMS-BIOS 프로토콜을 직접 구현했으므로 향후 DCS나 BMS 업데이트로 주소/오프셋이 변경되면 직접 수정이 필요하지만, 소스가 명확하고(`docs/protocol_reference.txt` 참조) 수정 범위도 작아 큰 부담은 아닙니다. 게다가 [Claude Code](https://claude.com/claude-code)도 있으니 든든합니다.
 
 ### DCS World (DCS-BIOS)
 
