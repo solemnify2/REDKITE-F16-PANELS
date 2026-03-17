@@ -121,7 +121,7 @@ Stand는 각각 Left/Right Enclosure 뒷면에 부착하는 지지대입니다. 
 
 `REDKITE_F16_PANELS.ino`를 열고 Upload.
 
-## Configuration
+## Customization
 
 하드웨어 변경은 `REDKITE_F16_PANELS.ino`의 **HARDWARE CONFIGURATION** 섹션만 수정합니다.
 
@@ -141,7 +141,7 @@ const AnalogBtnArrayDef analogBtnArrays[] = {
 
 패널을 비활성화하려면 해당 항목을 주석 처리하면 됩니다.
 
-## Protocol Support
+## DCS-BIOS / BMS-BIOS Protocol Support
 
 스위치/버튼 입력은 USB Joystick으로 직접 전달되지만, LED 상태는 시뮬레이터에서 받아와야 합니다. Python 브릿지가 시뮬레이터의 내부 데이터를 읽어 시리얼로 Teensy에 전송하고, Teensy는 수신된 프로토콜(BMS-BIOS / DCS-BIOS)을 자동 감지하여 LED를 제어합니다.
 
