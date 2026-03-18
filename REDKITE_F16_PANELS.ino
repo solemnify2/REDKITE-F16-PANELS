@@ -14,10 +14,11 @@
 // ================================================================
 
 #define BAUDRATE      1000000
-#define ALLOW_DEBUG   false
+#define ALLOW_DEBUG   true
 #define MAX_PIN       55        // Teensy 4.1 max digital pin
 #define LOOP_DELAY_MS 50
 #define SERIAL_TIMEOUT 6        // Serial heartbeat timeout in seconds
+#define BACKLIGHT_PIN  0        // Backlight control: LOW = on, HIGH = off (USB suspend)
 
 
 // ================================================================
@@ -143,11 +144,8 @@ const SwitchDef switches[] = {
   {"CMDS JETT",             PNL_CMDS,       SW_ON_OFF,      -1,  14,   0,  NULL},
 
   // ---- Alt Gear Panel (left aux console) ----
-  {"ALT GEAR Handle",       PNL_ALT_GEAR,   SW_ON_OFF,      -1,  12,   0,  NULL},
+  {"ALT GEAR Handle",       PNL_ALT_GEAR,   SW_ON_OFF,      -1,  33,   0,  NULL},     // wire too short for other than pin 33
   {"ALT GEAR Reset",        PNL_ALT_GEAR,   SW_ON_OFF,      -1,  13,   0,  NULL},
-
-  // ---- HMCS Panel ----
-  {"HMCS Eject",            PNL_HMCS,       SW_ON_OFF,      -1,   0,   0,  NULL},
 
 };
 
@@ -200,7 +198,7 @@ const LedDef leds[] = {
   {"Nose Gear",    PNL_GEAR,  30,  -1},
   {"Left Gear",    PNL_GEAR,  31,  -1},
   {"Right Gear",   PNL_GEAR,  32,  -1},
-  {"Gear Warn",    PNL_GEAR,  33,  -1},
+  {"Gear Warn",    PNL_GEAR,  27,  -1},   // alt gear wire was too short. so pin 33 is for alt gear
   {"TWA Power",    PNL_TWA,   34,  -1},
   {"TWA Low",      PNL_TWA,   35,  -1},
   {"TWA Search",   PNL_TWA,   36,  -1},
@@ -393,6 +391,7 @@ static int       onlineBlinkTimer  = 0;      // tick counter for 0.5s interval
 static uint8_t switchBtnStart[NUM_SWITCHES];
 static uint8_t analogBtnStart[NUM_ANALOG_ARRAYS];
 static int     totalButtons = 0;
+static uint8_t prevBtnState[128];  // debug: previous button states
 
 // ================================================================
 //  Button Count Helper
@@ -500,6 +499,10 @@ void processSwitches() {
     switch (sw.type) {
       case SW_ON_OFF: {
         int state = !readSwPin(sw, sw.pin1);
+        if (ALLOW_DEBUG && prevBtnState[btn] != state) {
+          Serial.printf("[SW] btn %d %s = %s\n", btn, sw.name, state ? "ON" : "OFF");
+          prevBtnState[btn] = state;
+        }
         Joystick.button(btn, state);
         if (sw.stateRef) *sw.stateRef = state;
         break;
@@ -508,6 +511,11 @@ void processSwitches() {
       case SW_ON_OFF_ON: {
         int s1 = readSwPin(sw, sw.pin1);
         int s2 = readSwPin(sw, sw.pin2);
+        if (ALLOW_DEBUG && (prevBtnState[btn] != !s1 || prevBtnState[btn + 1] != !s2)) {
+          Serial.printf("[SW] btn %d~%d %s = %d/%d\n", btn, btn + 1, sw.name, !s1, !s2);
+          prevBtnState[btn] = !s1;
+          prevBtnState[btn + 1] = !s2;
+        }
         Joystick.button(btn,     !s1);
         Joystick.button(btn + 1, !s2);
         if (sw.stateRef) *sw.stateRef = -(!s1) + (!s2);   // -1 = dn, 0 = center, 1 = up
@@ -534,10 +542,8 @@ void processAnalogButtons() {
       Joystick.button(btn + i, matched);
     }
 
-    // if (ALLOW_DEBUG) {
-    if ( raw > 10 ) 
+    if (ALLOW_DEBUG && raw > 10)
       Serial.printf("[%s] raw=%d\n", arr.groupName, raw);
-    // }
   }
 }
 
@@ -595,26 +601,37 @@ void updateLedsOffline() {
   static int blinkCounter = 0;
   const int ticksPerSecond = 1000 / LOOP_DELAY_MS;
 
-  // Gear LEDs: cycle through 3 LEDs, 1 second each
-  static int gearPhase = 0;
-
+  // Gear: 2s delay after state change, then update LEDs; Warn for 5s on change
+  static int prevGearState = 0;
+  static int gearWarnTicks = 0;
+  static int gearDelayTicks = 0;
+  static bool gearLedState = false;
+  if (swGear != prevGearState) {
+    prevGearState = swGear;
+    gearWarnTicks = 5 * ticksPerSecond;   // 5 seconds
+    gearDelayTicks = 2 * ticksPerSecond;  // 2 seconds delay
+  }
+  if (gearDelayTicks > 0) {
+    gearDelayTicks--;
+    if (gearDelayTicks == 0) gearLedState = (swGear == 1);
+  }
 
   for (unsigned int i = 0; i < NUM_LEDS; i++) {
     if ((int)i == ECM_LED_IDX)
       writeLed(i, blinkCounter / (ticksPerSecond / 2));
     else if (i >= LI_NOSE_GEAR && i <= LI_RIGHT_GEAR)
-      writeLed(i, (int)(i - LI_NOSE_GEAR) == gearPhase ? 1 : 0);
+      writeLed(i, gearLedState);
+    else if (i == LI_GEAR_WARN)
+      writeLed(i, gearWarnTicks > 0);
     else if (i >= LI_TWA_POWER && i <= LI_TWA_ACT)
       writeLed(i, 0);
     else
       writeLed(i, 0);
   }
 
-  blinkCounter = (blinkCounter + 1) % ticksPerSecond;
+  if (gearWarnTicks > 0) gearWarnTicks--;
 
-  if (blinkCounter == 0) {
-    gearPhase = (gearPhase + 1) % 3;
-  }
+  blinkCounter = (blinkCounter + 1) % ticksPerSecond;
 }
 
 // ================================================================
@@ -748,6 +765,10 @@ void setup() {
     mcpInit(i);
   }
 
+  // Configure backlight pin (LOW = on, HIGH = off)
+  pinMode(BACKLIGHT_PIN, OUTPUT);
+  digitalWrite(BACKLIGHT_PIN, LOW);
+
   // Configure pedal pins
 #if PEDAL_ENABLED
   pinMode(PEDAL_PIN_LEFT,  INPUT);
@@ -802,9 +823,11 @@ void setup() {
 void loop() {
   if (isUSBSuspended()) {
     turnOffAllLeds();
+    digitalWrite(BACKLIGHT_PIN, HIGH);  // Backlight off
     asm("wfi");   // CPU sleep until next interrupt (USB resume, timer, etc.)
     return;
   }
+  digitalWrite(BACKLIGHT_PIN, LOW);     // Backlight on
 
   // --- Read all inputs ---
   processSwitches();

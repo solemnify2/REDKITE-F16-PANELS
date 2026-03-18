@@ -4,7 +4,7 @@ Joystick Button Layout
 Buttons are auto-assigned in order: switches[] -> analogBtnArrays[]
 
 
-Switches (btn 1~35)
+Switches (btn 1~34)
 --------------------
 
 Btn     Panel       Name                Type
@@ -36,29 +36,27 @@ Btn     Panel       Name                Type
 32      CMDS        CMDS JETT           ON/OFF
 33      Alt Gear    ALT GEAR Handle     ON/OFF
 34      Alt Gear    ALT GEAR Reset      ON/OFF
-35      HMCS        HMCS Eject          ON/OFF
 
-
-Analog Buttons (btn 36~50)
+Analog Buttons (btn 35~49)
 --------------------------
 
 Btn     Panel       Name
 ---     -----       ----
-36      TWA         TWA SEARCH
-37      TWA         TWA ACT/PWR
-38      TWA         TWA ALT
-39      TWA         TWA SYS PWR
-40      CMDS        MODE 1
-41      CMDS        MODE 2
-42      CMDS        MODE 3
-43      CMDS        MODE 4
-44      CMDS        MODE 5
-45      CMDS        MODE 6
-46      CMDS        PRGM BIT
-47      CMDS        PRGM 1
-48      CMDS        PRGM 2
-49      CMDS        PRGM 3
-50      CMDS        PRGM 4
+35      TWA         TWA SEARCH
+36      TWA         TWA ACT/PWR
+37      TWA         TWA ALT
+38      TWA         TWA SYS PWR
+39      CMDS        MODE 1
+40      CMDS        MODE 2
+41      CMDS        MODE 3
+42      CMDS        MODE 4
+43      CMDS        MODE 5
+44      CMDS        MODE 6
+45      CMDS        PRGM BIT
+46      CMDS        PRGM 1
+47      CMDS        PRGM 2
+48      CMDS        PRGM 3
+49      CMDS        PRGM 4
 
 
 Axes (6)
@@ -82,7 +80,7 @@ Idx   Name          Pin         Protocol (DCS / BMS)
 0     Nose Gear     30          0x447A bit14 / LB3 NoseGearDown
 1     Left Gear     31          0x447A bit15 / LB3 LeftGearDown
 2     Right Gear    32          0x447C bit0  / LB3 RightGearDown
-3     Gear Warn     33          0x447C bit1  / LB  GEARHANDLE
+3     Gear Warn     27          0x447C bit1  / LB  GEARHANDLE
 4     TWA Power     34          0x447E bit12 / LB2 AuxPwr
 5     TWA Low       35          0x447E bit13 / LB2 AuxLow
 6     TWA Search    36          0x447E bit10 / LB2 AuxSrch
@@ -93,8 +91,8 @@ Idx   Name          Pin         Protocol (DCS / BMS)
 Summary
 -------
 
-Total buttons:      50
-  Switches:         35  (ON/OFF 23, ON/OFF/ON 6x2)
+Total buttons:      49
+  Switches:         34  (ON/OFF 22, ON/OFF/ON 6x2)
   Analog ladder:    15  (TWA 4 + MODE 6 + PRGM 5)
 LEDs:                9  (direct 8 + MCP 1)
 Axes:                6  (HMCS pot 3 + Pedal rudder/brake 3)
