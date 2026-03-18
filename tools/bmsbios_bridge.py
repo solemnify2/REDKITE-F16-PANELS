@@ -36,8 +36,10 @@ OFF_LIGHTBITS2 = 124   # unsigned int (after headPitch/Roll/Yaw)
 OFF_LIGHTBITS3 = 128   # unsigned int
 
 # --- LightBits (offset 108) ---
-LB_GEARHANDLE       = 0x40000000  # bit 30 — gear handle lamp (fault or gear in motion)
 LB_ECM              = 0x04000000  # bit 26
+
+# --- LightBits2 (offset 124) ---
+LB_GEARHANDLE       = 0x40000000  # bit 30 — gear handle lamp (in LightBits2)
 
 # --- LightBits2 (offset 240) ---
 LB2_AUX_SRCH        = 0x00001000  # bit 12 — TWA Search
@@ -69,7 +71,7 @@ LED_MAP = [
     (LI_NOSE_GEAR,         OFF_LIGHTBITS3, LB3_NOSE_GEAR_DN),
     (LI_LEFT_GEAR,         OFF_LIGHTBITS3, LB3_LEFT_GEAR_DN),
     (LI_RIGHT_GEAR,        OFF_LIGHTBITS3, LB3_RIGHT_GEAR_DN),
-    (LI_GEAR_WARN,         OFF_LIGHTBITS,  LB_GEARHANDLE),
+    (LI_GEAR_WARN,         OFF_LIGHTBITS2, LB_GEARHANDLE),
     (LI_TWA_POWER,         OFF_LIGHTBITS2, LB2_AUX_PWR),
     (LI_TWA_LOW,           OFF_LIGHTBITS2, LB2_AUX_LOW),
     (LI_TWA_SEARCH,        OFF_LIGHTBITS2, LB2_AUX_SRCH),

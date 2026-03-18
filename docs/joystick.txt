@@ -80,7 +80,7 @@ Idx   Name          Pin         Protocol (DCS / BMS)
 0     Nose Gear     30          0x447A bit14 / LB3 NoseGearDown
 1     Left Gear     31          0x447A bit15 / LB3 LeftGearDown
 2     Right Gear    32          0x447C bit0  / LB3 RightGearDown
-3     Gear Warn     27          0x447C bit1  / LB  GEARHANDLE
+3     Gear Warn     27          0x447C bit1  / LB2 GEARHANDLE
 4     TWA Power     34          0x447E bit12 / LB2 AuxPwr
 5     TWA Low       35          0x447E bit13 / LB2 AuxLow
 6     TWA Search    36          0x447E bit10 / LB2 AuxSrch

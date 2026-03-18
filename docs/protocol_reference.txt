@@ -71,7 +71,6 @@ LightBits Mask Map (used in bmsbios_bridge.py):
   LightBits (offset 108):
     Name            Mask(hex)     Bit  Description
     -------------   ----------    ---  -----------
-    GEARHANDLE      0x40000000     30  Gear handle lamp (fault or gear in motion)
     ECM             0x04000000     26  ECM indicator
 
   LightBits2 (offset 124):
@@ -81,6 +80,7 @@ LightBits Mask Map (used in bmsbios_bridge.py):
     AuxAct          0x00002000     13  TWA Activity
     AuxLow          0x00004000     14  TWA Alt Low
     AuxPwr          0x00008000     15  TWA Power
+    GEARHANDLE      0x40000000     30  Gear handle lamp (gear in motion)
 
   LightBits3 (offset 128):
     Name            Mask(hex)     Bit  Description
@@ -98,7 +98,7 @@ LightBits Mask Map (used in bmsbios_bridge.py):
   0      Nose Gear     30    direct         0x447A bit14          LB3 NoseGearDown
   1      Left Gear     31    direct         0x447A bit15          LB3 LeftGearDown
   2      Right Gear    32    direct         0x447C bit0           LB3 RightGearDown
-  3      Gear Warn     33    direct         0x447C bit1           LB  GEARHANDLE
+  3      Gear Warn     27    direct         0x447C bit1           LB2 GEARHANDLE
   4      TWA Power     34    direct         0x447E bit12          LB2 AuxPwr
   5      TWA Low       35    direct         0x447E bit13          LB2 AuxLow
   6      TWA Search    36    direct         0x447E bit10          LB2 AuxSrch
