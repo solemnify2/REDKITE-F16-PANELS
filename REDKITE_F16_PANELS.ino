@@ -601,12 +601,12 @@ void updateLedsOffline() {
   static int blinkCounter = 0;
   const int ticksPerSecond = 1000 / LOOP_DELAY_MS;
 
-  // Gear: 2s delay after state change, then update LEDs; Warn for 5s on change
+  // Gear: trigger only on center→UP/DN transition (ignore center state)
   static int prevGearState = 0;
   static int gearWarnTicks = 0;
   static int gearDelayTicks = 0;
   static bool gearLedState = false;
-  if (swGear != prevGearState) {
+  if (swGear != 0 && swGear != prevGearState) {
     prevGearState = swGear;
     gearWarnTicks = 5 * ticksPerSecond;   // 5 seconds
     gearDelayTicks = 2 * ticksPerSecond;  // 2 seconds delay
