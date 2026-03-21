@@ -14,11 +14,11 @@
 // ================================================================
 
 #define BAUDRATE      1000000
-#define ALLOW_DEBUG   true
+#define ALLOW_DEBUG   false
 #define MAX_PIN       55        // Teensy 4.1 max digital pin
 #define LOOP_DELAY_MS 50
 #define SERIAL_TIMEOUT 6        // Serial heartbeat timeout in seconds
-#define BACKLIGHT_PIN  0        // Backlight control: LOW = on, HIGH = off (USB suspend)
+#define BACKLIGHT_PIN  0        // Backlight PWM (MOSFET: 0=off, 255=full)
 
 
 // ================================================================
@@ -731,6 +731,8 @@ void setup() {
   Serial.begin(BAUDRATE);
   Joystick.useManualSend(true);
 
+  Serial.printf("..\n");
+
 #if JOYSTICK_SIZE == 12
   Joystick.hat(-1);
 #elif JOYSTICK_SIZE == 64
@@ -772,9 +774,9 @@ void setup() {
     mcpInit(i);
   }
 
-  // Configure backlight pin (LOW = on, HIGH = off)
-  pinMode(BACKLIGHT_PIN, OUTPUT);
-  digitalWrite(BACKLIGHT_PIN, LOW);
+  // Configure backlight PWM (MOSFET gate: 0=off, 255=full brightness)
+  analogWriteFrequency(BACKLIGHT_PIN, 1000);  // 1kHz PWM
+  analogWrite(BACKLIGHT_PIN, 255);            // Full brightness
 
   // Configure pedal pins
 #if PEDAL_ENABLED
@@ -830,11 +832,9 @@ void setup() {
 void loop() {
   if (isUSBSuspended()) {
     turnOffAllLeds();
-    digitalWrite(BACKLIGHT_PIN, HIGH);  // Backlight off
     asm("wfi");   // CPU sleep until next interrupt (USB resume, timer, etc.)
     return;
   }
-  digitalWrite(BACKLIGHT_PIN, LOW);     // Backlight on
 
   // --- Read all inputs ---
   processSwitches();
