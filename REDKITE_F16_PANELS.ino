@@ -204,8 +204,8 @@ const LedDef leds[] = {
   {"TWA Search",   PNL_TWA,   36,  -1},
   {"TWA Act",      PNL_TWA,   37,  -1},
   {"ECM",          PNL_MISC,  7,   0},    // MCP device 0, GPA7
-  {"ADV Active",   PNL_MISC,  8,   0},   // MCP device 0, GPB0
-  {"ADV Standby",  PNL_MISC,  9,   0},   // MCP device 0, GPB1
+  {"ADV Active",   PNL_MISC,  9,   0},   // MCP device 0, GPB0
+  {"ADV Standby",  PNL_MISC,  8,   0},   // MCP device 0, GPB1
 };
 
 // --- MCP23017 Devices ---

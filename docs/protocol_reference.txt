@@ -71,7 +71,7 @@ LightBits Mask Map (used in bmsbios_bridge.py):
   LightBits (offset 108):
     Name            Mask(hex)     Bit  Description
     -------------   ----------    ---  -----------
-    ECM             0x04000000     26  ECM indicator
+    AdvStandby      0x80000000     31  ADV Standby indicator
 
   LightBits2 (offset 124):
     Name            Mask(hex)     Bit  Description
@@ -80,6 +80,8 @@ LightBits Mask Map (used in bmsbios_bridge.py):
     AuxAct          0x00002000     13  TWA Activity
     AuxLow          0x00004000     14  TWA Alt Low
     AuxPwr          0x00008000     15  TWA Power
+    EcmPwr          0x00010000     16  ECM power indicator
+    AdvActive       0x20000000     29  ADV Active indicator
     GEARHANDLE      0x40000000     30  Gear handle lamp (gear in motion)
 
   LightBits3 (offset 128):
@@ -103,9 +105,9 @@ LightBits Mask Map (used in bmsbios_bridge.py):
   5      TWA Low       35    direct         0x447E bit13          LB2 AuxLow
   6      TWA Search    36    direct         0x447E bit10          LB2 AuxSrch
   7      TWA Act       37    direct         0x447E bit11          LB2 AuxAct
-  8      ECM           MCP0:7   MCP 0x20    0x4544 bit14          LB  ECM
-  9      ADV Active    MCP0:8   MCP 0x20    (TBD)                 (TBD)
-  10     ADV Standby   MCP0:9   MCP 0x20    (TBD)                 (TBD)
+  8      ECM           MCP0:7   MCP 0x20    0x4544 bit14          LB2 EcmPwr
+  9      ADV Active    MCP0:8   MCP 0x20    (TBD)                 LB2 AdvActive
+  10     ADV Standby   MCP0:9   MCP 0x20    (TBD)                 LB AdvStandby
 
 
 4. Protocol Auto-Detection

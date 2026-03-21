@@ -85,9 +85,9 @@ Idx   Name          Pin         Protocol (DCS / BMS)
 5     TWA Low       35          0x447E bit13 / LB2 AuxLow
 6     TWA Search    36          0x447E bit10 / LB2 AuxSrch
 7     TWA Act       37          0x447E bit11 / LB2 AuxAct
-8     ECM           MCP0:7      0x4544 bit14 / LB  ECM
-9     ADV Active    MCP0:8      (TBD)
-10    ADV Standby   MCP0:9      (TBD)
+8     ECM           MCP0:7      0x4544 bit14 / LB2 EcmPwr
+9     ADV Active    MCP0:8      (TBD) / LB2 AdvActive bit29
+10    ADV Standby   MCP0:9      (TBD) / LB AdvStandby bit31
 
 
 Summary

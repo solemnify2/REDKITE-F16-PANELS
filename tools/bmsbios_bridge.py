@@ -36,18 +36,20 @@ OFF_LIGHTBITS2 = 124   # unsigned int (after headPitch/Roll/Yaw)
 OFF_LIGHTBITS3 = 128   # unsigned int
 
 # --- LightBits (offset 108) ---
-LB_ECM              = 0x04000000  # bit 26
+LB_ADV_STANDBY      = 0x80000000  # bit 31 — ADV Standby indicator
 
 # --- LightBits2 (offset 124) ---
-LB_GEARHANDLE       = 0x40000000  # bit 30 — gear handle lamp (in LightBits2)
+LB2_ECM_PWR         = 0x00010000  # bit 16 — ECM power indicator
+LB2_ADV_ACTIVE      = 0x20000000  # bit 29 — ADV Active indicator
+LB_GEARHANDLE       = 0x40000000  # bit 30 — gear handle lamp
 
-# --- LightBits2 (offset 240) ---
+# --- LightBits2 (offset 124, continued) ---
 LB2_AUX_SRCH        = 0x00001000  # bit 12 — TWA Search
 LB2_AUX_ACT         = 0x00002000  # bit 13 — TWA Activity
 LB2_AUX_LOW         = 0x00004000  # bit 14 — TWA Low Alt
 LB2_AUX_PWR         = 0x00008000  # bit 15 — TWA Power
 
-# --- LightBits3 (offset 244) ---
+# --- LightBits3 (offset 128) ---
 LB3_NOSE_GEAR_DN    = 0x00010000  # bit 16
 LB3_LEFT_GEAR_DN    = 0x00020000  # bit 17
 LB3_RIGHT_GEAR_DN   = 0x00040000  # bit 18
@@ -65,6 +67,8 @@ LI_TWA_LOW          = 5
 LI_TWA_SEARCH       = 6
 LI_TWA_ACT          = 7
 LI_ECM              = 8
+LI_ADV_ACTIVE       = 9
+LI_ADV_STANDBY      = 10
 
 # LED mapping table: (LedIdx, lightBits_offset, mask)
 LED_MAP = [
@@ -76,7 +80,9 @@ LED_MAP = [
     (LI_TWA_LOW,           OFF_LIGHTBITS2, LB2_AUX_LOW),
     (LI_TWA_SEARCH,        OFF_LIGHTBITS2, LB2_AUX_SRCH),
     (LI_TWA_ACT,           OFF_LIGHTBITS2, LB2_AUX_ACT),
-    (LI_ECM,               OFF_LIGHTBITS,  LB_ECM),
+    (LI_ECM,               OFF_LIGHTBITS2, LB2_ECM_PWR),
+    (LI_ADV_ACTIVE,        OFF_LIGHTBITS2, LB2_ADV_ACTIVE),
+    (LI_ADV_STANDBY,       OFF_LIGHTBITS,  LB_ADV_STANDBY),
 ]
 
 # ================================================================
@@ -173,7 +179,14 @@ def main():
                         lb  = read_int32(shm, OFF_LIGHTBITS)
                         lb2 = read_int32(shm, OFF_LIGHTBITS2)
                         lb3 = read_int32(shm, OFF_LIGHTBITS3)
-                        print(f"  LB=0x{lb:08X}  LB2=0x{lb2:08X}  LB3=0x{lb3:08X}  → ledBits=0x{led_bits:08X}", end="\r")
+                        raw = (lb, lb2, lb3)
+                        if not hasattr(main, '_prev_raw'):
+                            main._prev_raw = raw
+                        if raw != main._prev_raw:
+                            print(f"\n  LB=0x{lb:08X}  LB2=0x{lb2:08X}  LB3=0x{lb3:08X}  → ledBits=0x{led_bits:08X}")
+                            main._prev_raw = raw
+                        else:
+                            print(f"  LB=0x{lb:08X}  LB2=0x{lb2:08X}  LB3=0x{lb3:08X}  → ledBits=0x{led_bits:08X}", end="\r")
 
                     # Only send if state changed (or first frame)
                     if led_bits != prev_led:
