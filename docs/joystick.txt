@@ -9,13 +9,13 @@ Switches (btn 1~34)
 
 Btn     Panel       Name                Type
 ---     -----       ----                ----
-1       MISC        Laser ARM           ON/OFF
-2~3     MISC        RF                  ON/OFF/ON
-4~5     MISC        Master ARM          ON/OFF/ON
-6~7     MISC        Pitch AP            ON/OFF/ON
+1~2     MISC        RF                  ON/OFF/ON
+3       MISC        Laser ARM           ON/OFF
+4       MISC        ALT REL             ON/OFF
+5~6     MISC        Master ARM          ON/OFF/ON
+7       MISC        ADV MODE            ON/OFF
 8~9     MISC        Roll AP             ON/OFF/ON
-10      MISC        ALT REL             ON/OFF
-11      MISC        ADV MODE            ON/OFF
+10~11   MISC        Pitch AP            ON/OFF/ON
 12      Gear        EMER Jettison       ON/OFF
 13      Gear        Store CAT           ON/OFF
 14      Gear        Horn Silencer       ON/OFF
@@ -72,8 +72,8 @@ Xr/SL   Pedal       Left Brake          A16
 Yr/SR   Pedal       Right Brake         A17
 
 
-LEDs (9)
---------
+LEDs (11)
+---------
 
 Idx   Name          Pin         Protocol (DCS / BMS)
 ---   -----------   ---------   --------------------
@@ -85,7 +85,9 @@ Idx   Name          Pin         Protocol (DCS / BMS)
 5     TWA Low       35          0x447E bit13 / LB2 AuxLow
 6     TWA Search    36          0x447E bit10 / LB2 AuxSrch
 7     TWA Act       37          0x447E bit11 / LB2 AuxAct
-8     ECM           MCP0:11     0x4544 bit14 / LB  ECM
+8     ECM           MCP0:7      0x4544 bit14 / LB  ECM
+9     ADV Active    MCP0:8      (TBD)
+10    ADV Standby   MCP0:9      (TBD)
 
 
 Summary
@@ -94,5 +96,5 @@ Summary
 Total buttons:      49
   Switches:         34  (ON/OFF 22, ON/OFF/ON 6x2)
   Analog ladder:    15  (TWA 4 + MODE 6 + PRGM 5)
-LEDs:                9  (direct 8 + MCP 1)
+LEDs:               11  (direct 8 + MCP 3)
 Axes:                6  (HMCS pot 3 + Pedal rudder/brake 3)

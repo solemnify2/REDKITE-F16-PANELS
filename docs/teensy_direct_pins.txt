@@ -94,12 +94,15 @@ Note: A10=pin24, A11=pin25, A12=pin26, A13=pin27,
 Unused Pins:        12
 
 MCP23017 (I2C 0x20) - MISC Panel:
-  GPA0    Laser ARM
-  GPA1-2  RF (ON/OFF/ON)
-  GPA3-4  Master ARM (ON/OFF/ON)
-  GPA5-6  Pitch AP (ON/OFF/ON)
-  GPA7    Roll AP (pin1)
-  GPB0    Roll AP (pin2)
-  GPB1    ALT REL
+  GPA0-1  Master ARM (ON/OFF/ON)
+  GPA2    ALT REL
+  GPA3    Laser ARM
+  GPA4-5  RF (ON/OFF/ON)
+  GPA6    (unused)
+  GPA7    ECM LED (output)
+  GPB0    ADV Active LED (output)
+  GPB1    ADV Standby LED (output)
   GPB2    ADV MODE
-  GPB3    ECM LED (output)
+  GPB3-4  Roll AP (ON/OFF/ON)
+  GPB5-6  Pitch AP (ON/OFF/ON)
+  GPB7    (unused)

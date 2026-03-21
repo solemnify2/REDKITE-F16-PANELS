@@ -113,13 +113,13 @@ const SwitchDef switches[] = {
 
   // ---- MISC Panel (MCP23017 device 0, addr 0x20) ----
   // MCP pin mapping: GPA0–7 = 0–7, GPB0–7 = 8–15
-  {"Laser ARM",             PNL_MISC,       SW_ON_OFF,       0,   0,   0,  NULL},   // GPA0
-  {"RF",                    PNL_MISC,       SW_ON_OFF_ON,    0,   1,   2,  NULL},   // GPA1, GPA2
-  {"Master ARM",            PNL_MISC,       SW_ON_OFF_ON,    0,   3,   4,  NULL},   // GPA3, GPA4
-  {"Pitch AP",              PNL_MISC,       SW_ON_OFF_ON,    0,   5,   6,  NULL},   // GPA5, GPA6
-  {"Roll AP",               PNL_MISC,       SW_ON_OFF_ON,    0,   7,   8,  NULL},   // GPA7, GPB0
-  {"ALT REL",               PNL_MISC,       SW_ON_OFF,       0,   9,   0,  NULL},   // GPB1
-  {"ADV MODE",              PNL_MISC,       SW_ON_OFF,       0,   10,   0,  NULL},   // GPB2
+  {"RF",                    PNL_MISC,       SW_ON_OFF_ON,    0,   4,   5,  NULL},   // GPA4, GPA5
+  {"Laser ARM",             PNL_MISC,       SW_ON_OFF,       0,   3,   0,  NULL},   // GPA3
+  {"ALT REL",               PNL_MISC,       SW_ON_OFF,       0,   2,   0,  NULL},   // GPA2
+  {"Master ARM",            PNL_MISC,       SW_ON_OFF_ON,    0,   0,   1,  NULL},   // GPA0, GPA1
+  {"ADV MODE",              PNL_MISC,       SW_ON_OFF,       0,   10,  0,  NULL},   // GPB2
+  {"Roll AP",               PNL_MISC,       SW_ON_OFF_ON,    0,   11,  12,  NULL},  // GPB3, GPB4
+  {"Pitch AP",              PNL_MISC,       SW_ON_OFF_ON,    0,   13,  14,  NULL},  // GPB5, GPB6
 
   // ---- Gear Panel (left aux console) ----
   {"EMER Jettison",         PNL_GEAR,       SW_ON_OFF,      -1,   10,   0,  NULL},
@@ -188,7 +188,7 @@ const PotDef pots[] = {
 enum LedIdx {
   LI_NOSE_GEAR, LI_LEFT_GEAR, LI_RIGHT_GEAR, LI_GEAR_WARN,
   LI_TWA_POWER, LI_TWA_LOW, LI_TWA_SEARCH, LI_TWA_ACT,
-  LI_ECM,
+  LI_ECM, LI_ADV_ACTIVE, LI_ADV_STANDBY,
 };
 
 // pin 번호가 direct LED와 MCP LED에서 중복될 경우, MCP 쪽이 우선 적용됩니다.
@@ -203,7 +203,9 @@ const LedDef leds[] = {
   {"TWA Low",      PNL_TWA,   35,  -1},
   {"TWA Search",   PNL_TWA,   36,  -1},
   {"TWA Act",      PNL_TWA,   37,  -1},
-  {"ECM",          PNL_MISC,  11,   0},   // MCP device 0, MCP pin 11 (GPB3)
+  {"ECM",          PNL_MISC,  7,   0},    // MCP device 0, GPA7
+  {"ADV Active",   PNL_MISC,  8,   0},   // MCP device 0, GPB0
+  {"ADV Standby",  PNL_MISC,  9,   0},   // MCP device 0, GPB1
 };
 
 // --- MCP23017 Devices ---
@@ -623,6 +625,10 @@ void updateLedsOffline() {
       writeLed(i, gearLedState);
     else if (i == LI_GEAR_WARN)
       writeLed(i, gearWarnTicks > 0);
+    else if (i == LI_ADV_ACTIVE)
+      writeLed(i, blinkCounter < ticksPerSecond / 2);   // 1s alternating
+    else if (i == LI_ADV_STANDBY)
+      writeLed(i, blinkCounter >= ticksPerSecond / 2);  // opposite phase
     else if (i >= LI_TWA_POWER && i <= LI_TWA_ACT)
       writeLed(i, 0);
     else
@@ -761,6 +767,7 @@ void setup() {
 
   // Initialize MCP23017 I/O expanders
   MCP_WIRE.begin();
+  MCP_WIRE.setClock(100000);  // 100kHz (Standard Mode)
   for (unsigned int i = 0; i < NUM_MCP_DEVICES; i++) {
     mcpInit(i);
   }

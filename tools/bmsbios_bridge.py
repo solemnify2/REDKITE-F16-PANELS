@@ -141,7 +141,7 @@ def read_led_states(shm):
 
 def main():
     parser = argparse.ArgumentParser(description='BMS-BIOS Bridge')
-    parser.add_argument('port', help='Serial port (e.g., COM4)')
+    parser.add_argument('port', nargs='?', default='COM4', help='Serial port (default: COM4)')
     parser.add_argument('--baud', type=int, default=1000000, help='Baud rate (default: 1000000)')
     parser.add_argument('--hz', type=int, default=20, help='Update rate in Hz (default: 20)')
     parser.add_argument('--debug', action='store_true', help='Print raw shared memory values')
