@@ -39,16 +39,46 @@ def find_teensy_port():
     return None
 
 
+def parse_dcsbios_packet(data, debug_addrs):
+    """Parse DCS-BIOS binary frame and print values at watched addresses."""
+    i = 0
+    while i + 3 < len(data):
+        addr = data[i] | (data[i+1] << 8)
+        count = data[i+2] | (data[i+3] << 8)
+        i += 4
+        if addr == 0x5555 and count == 0x5555:
+            break  # frame end
+        if i + count > len(data):
+            break
+        for offset in range(0, count, 2):
+            if i + offset + 1 < len(data):
+                word_addr = addr + offset
+                if word_addr in debug_addrs:
+                    value = data[i + offset] | (data[i + offset + 1] << 8)
+                    act = 1 if (value & 0x0004) else 0
+                    stb = 1 if (value & 0x0008) else 0
+                    twa = f"{1 if (value & 0x0400) else 0}{1 if (value & 0x0800) else 0}{1 if (value & 0x1000) else 0}{1 if (value & 0x2000) else 0}"
+                    print(f"  [DCS] 0x{word_addr:04X} = 0x{value:04X}  ACT={act} STB={stb} TWA={twa}")
+        i += count
+
+
 def main():
+    import argparse
+    parser = argparse.ArgumentParser(description='DCS-BIOS UDP -> Serial Bridge')
+    parser.add_argument('port', nargs='?', default=None, help='COM port (default: auto-detect or COM4)')
+    parser.add_argument('--debug', action='store_true', help='Print 0x447E values to console')
+    args = parser.parse_args()
+
     # COM 포트 결정
-    if len(sys.argv) > 1:
-        com_port = sys.argv[1]
+    if args.port:
+        com_port = args.port
     else:
         com_port = find_teensy_port()
         if not com_port:
-            print("COM 포트를 찾을 수 없습니다. 포트를 인자로 지정하세요.")
-            print("예: python dcsbios_bridge.py COM4")
-            sys.exit(1)
+            com_port = 'COM4'
+            print(f"COM 포트 자동 감지 실패, 기본값 {com_port} 사용")
+
+    debug_addrs = {0x447E} if args.debug else set()
 
     # 시리얼 포트 열기
     try:
@@ -82,6 +112,8 @@ def main():
                 data, addr = sock.recvfrom(4096)
                 if data:
                     ser.write(data)
+                    if debug_addrs:
+                        parse_dcsbios_packet(data, debug_addrs)
                     total_bytes += len(data)
                     packet_count += 1
 

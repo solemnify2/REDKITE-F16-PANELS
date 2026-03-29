@@ -31,8 +31,10 @@
 // Address 0x447C: Right gear (bit0), Gear Warning (bit1)
 #define DCSBIOS_GEAR_WARN_MASK  0x0002  // bit 1 — LIGHT_GEAR_WARN (red)
 
-// Address 0x447E: RWR/TWA indicator lights
+// Address 0x447E: RWR/TWA + ADV indicator lights
 #define DCSBIOS_TWA_ADDR          0x447E
+#define DCSBIOS_ADV_ACTIVE_MASK   0x0004  // bit 2  — LIGHT_ACTIVE (green)
+#define DCSBIOS_ADV_STBY_MASK     0x0008  // bit 3  — LIGHT_STBY (yellow)
 #define DCSBIOS_TWA_SEARCH_MASK   0x0400  // bit 10 — LIGHT_RWR_SEARCH
 #define DCSBIOS_TWA_ACT_MASK      0x0800  // bit 11 — LIGHT_RWR_ACTIVITY
 #define DCSBIOS_TWA_POWER_MASK    0x1000  // bit 12 — LIGHT_RWR_ACT_POWER
@@ -100,6 +102,9 @@ static void dcsBiosOnUpdate(uint16_t addr, uint16_t value) {
     writeLed(LI_GEAR_WARN, (value & DCSBIOS_GEAR_WARN_MASK));
   }
   else if (addr == DCSBIOS_TWA_ADDR) {
+    if (ALLOW_DEBUG) Serial.printf("[DCS] 0x447E = 0x%04X  ACT=%d STB=%d\n", value, !!(value & DCSBIOS_ADV_ACTIVE_MASK), !!(value & DCSBIOS_ADV_STBY_MASK));
+    writeLed(LI_ADV_ACTIVE, (value & DCSBIOS_ADV_ACTIVE_MASK));
+    writeLed(LI_ADV_STANDBY, (value & DCSBIOS_ADV_STBY_MASK));
     writeLed(LI_TWA_POWER, (value & DCSBIOS_TWA_POWER_MASK));
     writeLed(LI_TWA_LOW, (value & DCSBIOS_TWA_LOW_MASK));
     writeLed(LI_TWA_SEARCH, (value & DCSBIOS_TWA_SEARCH_MASK));

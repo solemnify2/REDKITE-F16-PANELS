@@ -161,15 +161,15 @@ const char* const twaBtnNames[] = {"TWA SEARCH","TWA ACT/PWR","TWA ALT","TWA SYS
 const int         twaBtnValues[] = {839, 710, 615, 543};
 
 const char* const cmdsModeBtnNames[] = {"MODE 1","MODE 2","MODE 3","MODE 4","MODE 5","MODE 6"};
-const int         cmdsModeBtnValues[] = {843, 718, 624, 553, 496, 449};
+const int         cmdsModeBtnValues[] = {850, 728, 637, 567, 510, 464};
 
 const char* const cmdsPrgmBtnNames[] = {"PRGM BIT","PRGM 1","PRGM 2","PRGM 3","PRGM 4"};
-const int         cmdsPrgmBtnValues[] = {843, 718, 624, 553, 496};
+const int         cmdsPrgmBtnValues[] = {848, 725, 632, 562, 506};
 
 const AnalogBtnArrayDef analogBtnArrays[] = {
   // groupName       panel     pin  numBtn  btnNames           values              tolerance
   {"TWA Buttons",    PNL_TWA,  A10, 4,      twaBtnNames,       twaBtnValues,      30},
-  {"CMDS MODE",      PNL_CMDS, A11, 6,      cmdsModeBtnNames,  cmdsModeBtnValues, 15},
+  {"CMDS MODE",      PNL_CMDS, A11, 6,      cmdsModeBtnNames,  cmdsModeBtnValues, 25},
   {"CMDS PRGM",      PNL_CMDS, A12, 5,      cmdsPrgmBtnNames,  cmdsPrgmBtnValues, 25},
 };
 
@@ -606,23 +606,45 @@ void updateLedsOffline() {
   // Gear: trigger only on center→UP/DN transition (ignore center state)
   static int prevGearState = 0;
   static int gearWarnTicks = 0;
-  static int gearDelayTicks = 0;
-  static bool gearLedState = false;
+  static int gearDelayTicks = 0;     // countdown to first gear LED
+  static bool gearTarget = false;    // target state: true=DN, false=UP
+  static int gearSeqTicks = 0;       // countdown for sequential 0.5s intervals
+  static int gearSeqIdx = 0;         // 0=none done, 1=nose, 2=left, 3=right (all done)
+  static bool gearLedOn[3] = {false, false, false};  // nose, left, right
+
+  const int halfSecTicks = ticksPerSecond / 2;  // 0.5s
+
   if (swGear != 0 && swGear != prevGearState) {
     prevGearState = swGear;
     gearWarnTicks = 5 * ticksPerSecond;   // 5 seconds
     gearDelayTicks = 2 * ticksPerSecond;  // 2 seconds delay
+    gearTarget = (swGear == 1);           // DN = on, UP = off
+    gearSeqIdx = 0;
+    gearSeqTicks = 0;
   }
   if (gearDelayTicks > 0) {
     gearDelayTicks--;
-    if (gearDelayTicks == 0) gearLedState = (swGear == 1);
+    if (gearDelayTicks == 0) {
+      // Start sequential: first gear immediately
+      gearLedOn[0] = gearTarget;  // nose
+      gearSeqIdx = 1;
+      gearSeqTicks = halfSecTicks;
+    }
+  }
+  if (gearSeqIdx >= 1 && gearSeqIdx < 3 && gearSeqTicks > 0) {
+    gearSeqTicks--;
+    if (gearSeqTicks == 0) {
+      gearLedOn[gearSeqIdx] = gearTarget;  // left(1), then right(2)
+      gearSeqIdx++;
+      if (gearSeqIdx < 3) gearSeqTicks = halfSecTicks;
+    }
   }
 
   for (unsigned int i = 0; i < NUM_LEDS; i++) {
     if ((int)i == ECM_LED_IDX)
       writeLed(i, blinkCounter / (ticksPerSecond / 2));
     else if (i >= LI_NOSE_GEAR && i <= LI_RIGHT_GEAR)
-      writeLed(i, gearLedState);
+      writeLed(i, gearLedOn[i - LI_NOSE_GEAR]);
     else if (i == LI_GEAR_WARN)
       writeLed(i, gearWarnTicks > 0);
     else if (i == LI_ADV_ACTIVE)
@@ -678,6 +700,7 @@ bool detectAndRouteSerial() {
           if (syncCount >= 4) {
             currentProto = PROTO_DCSBIOS;
             syncCount = 0;
+            turnOffAllLeds();
             writeLed(LI_TWA_LOW, 1);
             onlineBlinkRemain = 8;  // 4 blinks (ON/OFF × 4)
             onlineBlinkTimer = 0;
@@ -693,6 +716,7 @@ bool detectAndRouteSerial() {
           // 0xAA 0xBB → BMS-BIOS protocol
           currentProto = PROTO_BMS_BIOS;
           bmsBiosSync1 = false;
+          turnOffAllLeds();
           writeLed(LI_TWA_POWER, 1);
           writeLed(LI_TWA_LOW, 1);
           onlineBlinkRemain = 8;
