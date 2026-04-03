@@ -19,6 +19,7 @@
 #define LOOP_DELAY_MS 50
 #define SERIAL_TIMEOUT 6        // Serial heartbeat timeout in seconds
 #define BACKLIGHT_PIN  0        // Backlight PWM (MOSFET: 0=off, 255=full)
+#define IDLE_TIMEOUT_MS (1000 * 60 * 30)  // offline idle timeout for backlight auto-off (30min)
 
 
 // ================================================================
@@ -238,8 +239,6 @@ const McpDeviceDef mcpDevices[] = {
 #define PEDAL_BRAKE_SW_REF    (&swLandingLight)
 #define PEDAL_BRAKE_SW_VALUE  (1)    // landing light UP position
 
-// --- Offline LED ---
-#define ECM_LED_IDX           LI_ECM
 
 // ================================================================
 //  End of Hardware Configuration
@@ -332,8 +331,20 @@ void mcpReadPorts(uint8_t deviceIdx) {
   uint8_t addr = mcpDevices[deviceIdx].addr;
   MCP_WIRE.beginTransmission(addr);
   MCP_WIRE.write(MCP_GPIOA);
-  if (MCP_WIRE.endTransmission() != 0) return;   // write failed — keep previous cache
-  if (MCP_WIRE.requestFrom(addr, (uint8_t)2) != 2) return;  // read failed — keep previous cache
+  if (MCP_WIRE.endTransmission() != 0) {
+    bool wasConnected = mcpConnected[deviceIdx];
+    mcpConnected[deviceIdx] = false;
+    mcpPortCache[deviceIdx] = 0xFFFF;
+    if (wasConnected) writeLed(LI_GEAR_WARN, true);
+    return;
+  }
+  if (MCP_WIRE.requestFrom(addr, (uint8_t)2) != 2) {
+    bool wasConnected = mcpConnected[deviceIdx];
+    mcpConnected[deviceIdx] = false;
+    mcpPortCache[deviceIdx] = 0xFFFF;
+    if (wasConnected) writeLed(LI_GEAR_WARN, true);
+    return;
+  }
   uint8_t a = MCP_WIRE.read();
   uint8_t b = MCP_WIRE.read();
   mcpPortCache[deviceIdx] = a | ((uint16_t)b << 8);
@@ -382,8 +393,6 @@ static Protocol  currentProto     = PROTO_UNKNOWN;
 static uint8_t   syncCount        = 0;       // consecutive 0x55 bytes seen
 static bool      bmsBiosSync1     = false;   // true after seeing 0xAA
 static uint32_t  protoDetectStart = 0;       // millis() when first byte arrived
-static int       onlineBlinkRemain = 0;      // remaining ON/OFF toggles for TWA1 blink
-static int       onlineBlinkTimer  = 0;      // tick counter for 0.5s interval
 
 // ================================================================
 //  Global State
@@ -394,6 +403,8 @@ static uint8_t switchBtnStart[NUM_SWITCHES];
 static uint8_t analogBtnStart[NUM_ANALOG_ARRAYS];
 static int     totalButtons = 0;
 static uint8_t prevBtnState[128];  // debug: previous button states
+static bool backlightIdleOff = false;  // true when backlight is off due to idle
+static uint32_t lastInputTime = 0;    // millis() of last switch/button activity
 
 // ================================================================
 //  Button Count Helper
@@ -501,9 +512,10 @@ void processSwitches() {
     switch (sw.type) {
       case SW_ON_OFF: {
         int state = !readSwPin(sw, sw.pin1);
-        if (ALLOW_DEBUG && prevBtnState[btn] != state) {
-          Serial.printf("[SW] btn %d %s = %s\n", btn, sw.name, state ? "ON" : "OFF");
+        if (prevBtnState[btn] != state) {
+          if (ALLOW_DEBUG) Serial.printf("[SW] btn %d %s = %s\n", btn, sw.name, state ? "ON" : "OFF");
           prevBtnState[btn] = state;
+          lastInputTime = millis();
         }
         Joystick.button(btn, state);
         if (sw.stateRef) *sw.stateRef = state;
@@ -513,10 +525,11 @@ void processSwitches() {
       case SW_ON_OFF_ON: {
         int s1 = readSwPin(sw, sw.pin1);
         int s2 = readSwPin(sw, sw.pin2);
-        if (ALLOW_DEBUG && (prevBtnState[btn] != !s1 || prevBtnState[btn + 1] != !s2)) {
-          Serial.printf("[SW] btn %d~%d %s = %d/%d\n", btn, btn + 1, sw.name, !s1, !s2);
+        if (prevBtnState[btn] != !s1 || prevBtnState[btn + 1] != !s2) {
+          if (ALLOW_DEBUG) Serial.printf("[SW] btn %d~%d %s = %d/%d\n", btn, btn + 1, sw.name, !s1, !s2);
           prevBtnState[btn] = !s1;
           prevBtnState[btn + 1] = !s2;
+          lastInputTime = millis();
         }
         Joystick.button(btn,     !s1);
         Joystick.button(btn + 1, !s2);
@@ -599,6 +612,56 @@ void turnOffAllLeds() {
   }
 }
 
+void welcomeCeremony() {
+  analogWrite(BACKLIGHT_PIN, 255);
+  turnOffAllLeds();
+
+  // Group sequential light-up: Gear → TWA → MISC
+  const unsigned int groups[][4] = {
+    {LI_GEAR_WARN, LI_NOSE_GEAR, LI_LEFT_GEAR, LI_RIGHT_GEAR},  // Gear
+    {LI_TWA_POWER, LI_TWA_LOW, LI_TWA_SEARCH, LI_TWA_ACT},      // TWA
+    {LI_ECM, LI_ADV_ACTIVE, LI_ADV_STANDBY, 0xFF},               // MISC (0xFF = unused)
+  };
+  const unsigned int groupSizes[] = {4, 4, 3};
+
+  for (int g = 0; g < 3; g++) {
+    for (unsigned int j = 0; j < groupSizes[g]; j++) {
+      writeLed(groups[g][j], true);
+      delay(80);
+    }
+  }
+
+  // All on — hold briefly
+  delay(300);
+
+  // Blink all 2 times
+  for (int b = 0; b < 2; b++) {
+    turnOffAllLeds();
+    delay(150);
+    for (unsigned int i = 0; i < NUM_LEDS; i++) writeLed(i, true);
+    delay(150);
+  }
+
+  turnOffAllLeds();
+}
+
+void miscReconnectCeremony() {
+  // MISC LEDs only: ECM → ADV Active → ADV Standby
+  const unsigned int miscLeds[] = {LI_ECM, LI_ADV_ACTIVE, LI_ADV_STANDBY};
+  for (int i = 0; i < 3; i++) {
+    writeLed(miscLeds[i], true);
+    delay(80);
+  }
+  delay(300);
+  for (int b = 0; b < 2; b++) {
+    for (int i = 0; i < 3; i++) writeLed(miscLeds[i], false);
+    delay(150);
+    for (int i = 0; i < 3; i++) writeLed(miscLeds[i], true);
+    delay(150);
+  }
+  for (int i = 0; i < 3; i++) writeLed(miscLeds[i], false);
+}
+
 void updateLedsOffline() {
   static int blinkCounter = 0;
   const int ticksPerSecond = 1000 / LOOP_DELAY_MS;
@@ -641,16 +704,13 @@ void updateLedsOffline() {
   }
 
   for (unsigned int i = 0; i < NUM_LEDS; i++) {
-    if ((int)i == ECM_LED_IDX)
-      writeLed(i, blinkCounter / (ticksPerSecond / 2));
-    else if (i >= LI_NOSE_GEAR && i <= LI_RIGHT_GEAR)
+    if (i >= LI_NOSE_GEAR && i <= LI_RIGHT_GEAR)
       writeLed(i, gearLedOn[i - LI_NOSE_GEAR]);
-    else if (i == LI_GEAR_WARN)
-      writeLed(i, gearWarnTicks > 0);
-    else if (i == LI_ADV_ACTIVE)
-      writeLed(i, blinkCounter < ticksPerSecond / 2);   // 1s alternating
-    else if (i == LI_ADV_STANDBY)
-      writeLed(i, blinkCounter >= ticksPerSecond / 2);  // opposite phase
+    else if (i == LI_GEAR_WARN) {
+      bool mcpDisconnected = false;
+      for (uint8_t d = 0; d < NUM_MCP_DEVICES; d++) { if (!mcpConnected[d]) mcpDisconnected = true; }
+      writeLed(i, gearWarnTicks > 0 || mcpDisconnected);
+    }
     else if (i >= LI_TWA_POWER && i <= LI_TWA_ACT)
       writeLed(i, 0);
     else
@@ -702,8 +762,6 @@ bool detectAndRouteSerial() {
             syncCount = 0;
             turnOffAllLeds();
             writeLed(LI_TWA_LOW, 1);
-            onlineBlinkRemain = 8;  // 4 blinks (ON/OFF × 4)
-            onlineBlinkTimer = 0;
             if (ALLOW_DEBUG) Serial.println("[Proto] Detected DCS-BIOS");
             // The 4 sync bytes are consumed; parser starts at ADDR_LOW
             dcsBiosReset();
@@ -719,8 +777,6 @@ bool detectAndRouteSerial() {
           turnOffAllLeds();
           writeLed(LI_TWA_POWER, 1);
           writeLed(LI_TWA_LOW, 1);
-          onlineBlinkRemain = 8;
-          onlineBlinkTimer = 0;
           if (ALLOW_DEBUG) Serial.println("[Proto] Detected BMS-BIOS");
           bmsBiosReset();
           // First frame sync already consumed; start at payload
@@ -801,6 +857,7 @@ void setup() {
   // Configure backlight PWM (MOSFET gate: 0=off, 255=full brightness)
   analogWriteFrequency(BACKLIGHT_PIN, 1000);  // 1kHz PWM
   analogWrite(BACKLIGHT_PIN, 255);            // Full brightness
+  lastInputTime = millis();
 
   // Configure pedal pins
 #if PEDAL_ENABLED
@@ -847,6 +904,8 @@ void setup() {
       analogBtnArrays[i].groupName, analogBtnArrays[i].numButtons);
   }
   Serial.println("=========================");
+
+  welcomeCeremony();
 }
 
 // ================================================================
@@ -856,8 +915,30 @@ void setup() {
 void loop() {
   if (isUSBSuspended()) {
     turnOffAllLeds();
+    if (!backlightIdleOff) {
+      analogWrite(BACKLIGHT_PIN, 0);
+      backlightIdleOff = true;
+    }
     asm("wfi");   // CPU sleep until next interrupt (USB resume, timer, etc.)
-    return;
+    return;       // USB resume: backlight stays off until online or switch input
+  }
+
+  // --- MCP hotplug: periodic reconnect check (every 500ms) ---
+  {
+    static uint32_t lastMcpCheck = 0;
+    if (millis() - lastMcpCheck > 500) {
+      lastMcpCheck = millis();
+      for (uint8_t d = 0; d < NUM_MCP_DEVICES; d++) {
+        if (!mcpConnected[d]) {
+          mcpInit(d);
+          if (mcpConnected[d]) {
+            Serial.printf("  [MCP@0x%02X] %s — RECONNECTED\n", mcpDevices[d].addr, mcpDevices[d].name);
+            writeLed(LI_GEAR_WARN, false);
+            miscReconnectCeremony();
+          }
+        }
+      }
+    }
   }
 
   // --- Read all inputs ---
@@ -888,15 +969,17 @@ void loop() {
   ++heartbeat;
   heartbeat = min(heartbeat, timeoutTicks);
 
-  // Online detection blink: TWA1 blinks 4 times at 0.5s interval
-  if (onlineBlinkRemain > 0) {
-    const int halfSecTicks = 500 / LOOP_DELAY_MS;  // 10 ticks
-    onlineBlinkTimer++;
-    if (onlineBlinkTimer >= halfSecTicks) {
-      onlineBlinkTimer = 0;
-      onlineBlinkRemain--;
-      writeLed(LI_TWA_POWER, onlineBlinkRemain & 1);  // odd=ON, even=OFF
+  // Backlight idle auto-off: offline + no input for IDLE_TIMEOUT_MS → turn off
+  if (heartbeat >= timeoutTicks) {
+    if (!backlightIdleOff && (millis() - lastInputTime > IDLE_TIMEOUT_MS)) {
+      analogWrite(BACKLIGHT_PIN, 0);
+      backlightIdleOff = true;
     }
+  }
+  // Wake from idle: USB resume, switch input, or bridge online → ceremony + ON
+  if (backlightIdleOff && (heartbeat < timeoutTicks || millis() - lastInputTime < IDLE_TIMEOUT_MS)) {
+    welcomeCeremony();
+    backlightIdleOff = false;
   }
 
   delay(LOOP_DELAY_MS);
